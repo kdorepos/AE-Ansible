@@ -1,0 +1,487 @@
+@version:3.5 
+@include "scl.conf"
+##########################################################################
+#  Copyright (C) 2016-2017  Rational Cyber LLC 
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#  See the GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is provided in the LICENSE 
+#  file. If not, see <http://www.gnu.org/licenses/> for additional detail.
+##########################################################################
+
+options {
+    flush_lines (100);
+    time_reopen (10);
+    log_fifo_size (1000);
+    chain_hostnames (off);
+    use_dns (no);
+    use_fqdn (no);
+    create_dirs (yes);
+    keep_hostname (yes);
+    threaded (yes);
+};
+
+#############################
+## SOURCE DEFINITIONS
+#############################
+
+source s_aggregation {
+    network(ip(0.0.0.0) transport(tcp) port(514));
+    network(ip(0.0.0.0) transport(udp) port(514));
+};
+
+source s_horizon_view_ports {
+    network(ip(0.0.0.0) transport(tcp) port(515));
+    network(ip(0.0.0.0) transport(udp) port(515));
+};
+
+source s_forescout_ports {
+    network(ip(0.0.0.0) transport(tcp) port(10514)); # Forescout
+    network(ip(0.0.0.0) transport(udp) port(10514)); # Forescout
+};
+
+source s_ise_ports {
+    network(ip(0.0.0.0) transport(tcp) port(11514)); # ISE
+    network(ip(0.0.0.0) transport(udp) port(11514)); # ISE
+};
+
+source s_pcf_prod_ports {
+    network(ip(0.0.0.0) transport(tcp) port(12514)); # Pivotal Cloud Foundry Prod
+    network(ip(0.0.0.0) transport(udp) port(12514)); # Pivotal Cloud Foundry Prod
+};
+
+# Hold for PCF NON PROD
+#source s_pcf_non_prod_ports {
+#    network(ip(0.0.0.0) transport(tcp) port(13514)); # Pivotal Cloud Foundry Non Prod
+#    network(ip(0.0.0.0) transport(udp) port(13514)); # Pivotal Cloud Foundry Non Prod
+#};
+
+source s_tms_ports {
+    network(ip(0.0.0.0) transport(tcp) port(14514)); # TGS:TMS CDS
+    network(ip(0.0.0.0) transport(udp) port(14514)); # TGS:TMS CDS
+};
+
+source s_tso_ports {
+    network(ip(0.0.0.0) transport(tcp) port(18514)); # TGS:TSO CDS
+    network(ip(0.0.0.0) transport(udp) port(18514)); # TGS:TSO CDS
+};
+
+source s_mcafee_ports {
+    network(ip(0.0.0.0) transport(tcp) port(19514)); # McAfee
+    network(ip(0.0.0.0) transport(udp) port(19514)); # McAfee
+};
+
+source s_esxi_ports {
+    network(ip(0.0.0.0) transport(tcp) port(1514));  # ESXi
+    network(ip(0.0.0.0) transport(udp) port(1514));  # ESXi
+};
+
+source s_palo_alto_ports {
+    network(ip(0.0.0.0) transport(tcp) port(16514)); # Palo Alto
+    network(ip(0.0.0.0) transport(udp) port(16514)); # Palo Alto
+};
+
+source s_cisco_stealthwatch {
+    network(ip(0.0.0.0) transport(tcp) port(62514));
+    network(ip(0.0.0.0) transport(udp) port(62514));
+};
+
+source s_sys {
+    system();
+    internal();
+};
+
+source s_tls_ports {
+    network(ip(0.0.0.0) transport(tls) port(6514)
+    tls( cert-file("/etc/syslog-ng/cert.d/{{ ansible_hostname }}.crt")
+         key-file("/etc/syslog-ng/cert.d/{{ ansible_hostname }}.key")
+         peer-verify(optional-untrusted)
+       )); # TLS
+#    network(ip(0.0.0.0) transport(udp) port(6514)); # TLS
+};
+
+source s_f5_ports {
+    network(ip(0.0.0.0) transport(tcp) port(17514)); # F5
+    network(ip(0.0.0.0) transport(udp) port(17514)); # F5
+};
+
+source s_cisco_mse {
+    network(ip(0.0.0.0) transport(tcp) port(61514)); # Cisco TelePresnce MSE
+    network(ip(0.0.0.0) transport(udp) port(61514)); # Cisco TelePresnce MSE
+};
+
+source s_cisco_vcsc_metrics {
+    network(ip(0.0.0.0) transport(tcp) port(60514)); # Cisco TelePresence VCSC server metrics
+    network(ip(0.0.0.0) transport(udp) port(60514)); # Cisco TelePresence VCSC server metrics
+};
+
+source s_cisco_vcsc_syslog {                                                                
+    network(ip(0.0.0.0) transport(tcp) port(59514)); # Cisco TelePresence VCSC syslog
+    network(ip(0.0.0.0) transport(udp) port(59514)); # Cisco TelePresence VCSC syslog
+};
+
+source s_cisco_vtc_tc_devices {
+    network(ip(0.0.0.0) transport(tcp) port(58514)); # Cisco VTC Telepresence Codec
+    network(ip(0.0.0.0) transport(udp) port(58514)); # Cisco VTC Telepresence Codec
+};
+
+source s_cisco_vtc_ce_devices {
+    network(ip(0.0.0.0) transport(tcp) port(57514)); # Cisco VTC Collaboration Endpoint
+    network(ip(0.0.0.0) transport(udp) port(57514)); # Cisco VTC Collaboration Endpoint
+}; 
+
+source s_mcafee_socom_esm {
+    network(ip(0.0.0.0) transport(tcp) port(10520)); # McAfee ESM syslog from SOCOM
+    network(ip(0.0.0.0) transport(udp) port(10520)); # McAfee ESM syslog from SOCOM
+}; 
+
+#############################
+## DESTINATION DEFINITIONS
+#############################
+
+# For date-related macros:
+# `S_` prefix: timestamp found in the log message.
+# `R_` prefix: timestamp when syslog-ng received the message.
+# `C_` prefix: current timestamp when syslog-ng resolves the macros.
+# No prefix: Equal to corresponding `S_` prefix macro.
+
+# New destination for storing data for Splunk to use. This will be used for normal traffic.
+# The basis of the file path is to 
+#   1) indicate which of possibly several syslog-ng servers received the event
+#   2) specify the date for easy log archiving and removal
+#   3) indicate the upstream syslog source that sent the data (useful for enterprise-scale debug and determining data owner)
+#   4) specify the host that generated the data
+#   5) use facility in an attempt to keep separate sourcetypes separate.
+# All this data survives and is indexed as the 'source' value for the event.
+
+destination d_cisco_mse {
+        file("/remote_syslog/cisco_mse/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+destination d_cisco_ironport {
+        file("/remote_syslog/cisco_ironport/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+destination d_cisco_vcsc_metrics {
+        file("/remote_syslog/vcsc_metrics/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+destination d_cisco_vcsc_syslog {                                                           
+        file("/remote_syslog/vcsc_syslog/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)                                  
+        owner("splunk") group("splunk") perm(0640));                                            
+};
+
+destination d_cisco_vtc_tc_devices {
+        file("/remote_syslog/vtc_tc_devices/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+destination d_cisco_vtc_ce_devices {                                                                
+        file("/remote_syslog/vtc_ce_devices/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)                                  
+        owner("splunk") group("splunk") perm(0640));                                            
+}; 
+
+destination d_logging_splunk {
+        file("/remote_syslog/$LOGHOST/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log" 
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Horizon View Destination
+destination d_logging_horizon_view {
+        file("/remote_syslog/horizon_view/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log" 
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Forescout Destination
+destination d_logging_forescout {
+        file("/remote_syslog/forescout/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log" 
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# ISE Destination
+destination d_logging_ise {
+        file("/remote_syslog/ise/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log" 
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Callmanager(CUCM) Destination
+destination d_logging_cucm {
+        file("/remote_syslog/cucm/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Cisco Teleconference (VCSC) Destination
+destination d_logging_vcsc {
+        file("/remote_syslog/vcsc/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Pivotal Cloud Foundry Destination
+destination d_logging_pcf_prod {
+        file("/remote_syslog/pcf_prod/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# TGS:TMS Cross Domain Solution Destination
+destination d_logging_tms {
+        file("/remote_syslog/tgs_tms/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# TGS:TSO Cross Domain Solution Destination
+destination d_logging_tso {
+        file("/remote_syslog/tgs_dtso/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# TGS Cross Domain Solution Destination
+destination d_logging_tgs {
+        file("/remote_syslog/tgs_cds/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Mcafee
+destination d_logging_mcafee {
+        file("/remote_syslog/mcafee/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# ESXi Host Server Destination
+destination d_logging_esxi {
+        file("/remote_syslog/esxi/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+destination d_logging_palo_alto {
+        file("/remote_syslog/palo/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+destination d_logging_cisco_stealthwatch {
+        file("/remote_syslog/cisco_stealthwatch/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+
+destination d_logging_asa {
+        file("/remote_syslog/asa/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Storage Grid
+destination d_logging_sg {
+        file("/remote_syslog/storagegrid/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750) 
+        owner("splunk") group("splunk") perm(0640));
+};
+
+template t_cylance {
+        template("$MSG\n");
+        template_escape(no);
+};
+
+# Cylance Protect Destinations
+destination d_logging_cylance {
+        file("/remote_syslog/cylance/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640) template (t_cylance));
+};
+
+# McAfee Mvision Destinations
+destination d_logging_mvision {
+        file("/remote_syslog/mvision/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# F5
+destination d_logging_f5 {
+        file("/remote_syslog/f5/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# HSG
+destination d_logging_hsg {
+        file("/remote_syslog/hsg/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# Netapp OnTap
+destination d_logging_netapp {
+        file("/remote_syslog/netapp/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# McAfee ESM syslog from SOCOM
+destination d_logging_mcafee_socom_esm {
+        file("/remote_syslog/mcafee_esm/log/$R_YEAR-$R_MONTH-$R_DAY/$HOST_FROM/$HOST/$FACILITY.log"
+        dir-owner("splunk") dir-group("splunk") dir-perm(0750)
+        owner("splunk") group("splunk") perm(0640));
+};
+
+# STIG'd syslog-ng boxes tend to force the owner to 'root' even if logrotate is configured to keep prior attributes. As a result, we need to specify permissions.
+# Here we use 644 and 640 for common files that are monitored by Splunk.
+destination d_mesg { file("/var/log/messages" perm(0644)); }; 
+destination d_auth { file("/var/log/secure" perm(0640)); }; 
+destination d_cons { file("/dev/console"); }; 
+destination d_mail { file("/var/log/maillog" flush_lines(10)); }; 
+destination d_spol { file("/var/log/spooler"); }; 
+destination d_boot { file("/var/log/boot.log"); }; 
+destination d_cron { file("/var/log/cron"); };
+destination d_kern { file("/var/log/kern"); }; 
+destination d_mlal { usertty("*"); };
+
+#############################
+## FILTER DEFINITIONS
+#############################
+
+filter f_kernel { facility(kern); };
+filter f_default { level(info..emerg) and not (facility(mail) or facility(authpriv) or facility(cron)); };
+filter f_auth { facility(authpriv); };
+filter f_mail { facility(mail); };
+filter f_emergency { level(emerg); };
+filter f_news { facility(uucp) or (facility(news) and level(crit..emerg)); };
+filter f_boot { facility(local7); };
+filter f_cron { facility(cron); };
+
+# Cisco ASAs
+filter f_asa { 
+                netmask("10.27.15.133/32") or netmask("10.27.15.134/32") or
+                netmask("10.27.0.201/32") or netmask("10.27.0.202/32");   
+               };
+
+#Call manager schtuff
+filter f_cucm { 
+                netmask("X.X.X.X/32") or netmask("X.X.X.X/32");  
+               };
+
+# Cisco Video Teleconference
+filter f_vcsc { 
+                netmask("X.X.X.X/32") or netmask("X.X.X.X/32");   
+               };
+               
+# TGS Cross Domain Servers
+filter f_tgs_cds { 
+                netmask("X.X.X.X/32") or netmask("X.X.X.X/32");  ; 
+               };
+
+# HSG Cross Domain Servers
+filter f_hsg { 
+                netmask("X.X.X.X/32") or netmask("X.X.X.X/32");
+               };
+
+# Netapp OnTap
+filter f_netapp {                                                                                 
+                netmask("10.100.213.13/32") or netmask("10.100.213.14/32") or
+                netmask("10.100.218.169/32") or netmask("10.100.218.168/32") or
+                netmask("10.22.197.231/32") or netmask("10.22.197.232/32") or
+                netmask("10.22.201.209/32") or netmask("10.22.201.210/32") or
+                netmask("10.22.209.33/32") or netmask("10.22.209.34/32") or
+                netmask("10.22.219.50/32") or netmask("10.22.219.51/32") or
+                netmask("10.236.57.51/32") or netmask("10.236.57.49/32");   
+               };
+
+# Storage Grid
+filter f_sg {                                                                                 
+                netmask("10.1.228.38/32") or netmask("10.1.228.40/32") or
+                netmask("10.1.228.45/32") or netmask("10.1.228.46/31");   
+               };
+               
+# Cisco Ironport
+filter f_cisco_ironport { 
+                netmask("10.27.17.219/32");
+               };
+
+# McAfee Mvision
+filter f_mvision { 
+                netmask("10.1.230.174/31") or netmask("10.1.230.176/32");
+               };
+
+# Cylance
+filter f_cylance { 
+                netmask("10.1.230.159/32");
+               };
+
+# Network traffic is not CUCM traffic... i think we need to add "and not filter(f_tgs_cds)" but it's working so not changing it
+filter f_network { not filter(f_cucm); not filter(f_asa); not filter(f_tgs_cds); not filter(f_mc2); not filter(f_netapp); not filter(f_cisco_ironport) };
+
+#############################
+## LOG OUTPUT DEFINITIONS
+#############################
+
+log { source(s_sys); filter(f_kernel); destination(d_cons); };
+log { source(s_sys); filter(f_kernel); destination(d_kern); };
+log { source(s_sys); filter(f_default); destination(d_mesg); };
+log { source(s_sys); filter(f_auth); destination(d_auth); };
+log { source(s_sys); filter(f_mail); destination(d_mail); };
+log { source(s_sys); filter(f_emergency); destination(d_mlal); };
+log { source(s_sys); filter(f_news); destination(d_spol); };
+log { source(s_sys); filter(f_boot); destination(d_boot); };
+log { source(s_sys); filter(f_cron); destination(d_cron); };
+
+# New line for storing aggregated logs from other syslog-ng servers in files for Splunk
+log { source(s_aggregation); filter(f_asa); destination(d_logging_asa); };
+log { source(s_aggregation); filter(f_cucm); destination(d_logging_cucm); };
+log { source(s_aggregation); filter(f_vcsc); destination(d_logging_vcsc); };
+log { source(s_aggregation); filter(f_tgs_cds); destination(d_logging_tgs); };
+log { source(s_aggregation); filter(f_netapp); destination(d_logging_netapp); };
+log { source(s_aggregation); filter(f_network); destination(d_logging_splunk); };
+log { source(s_aggregation); filter(f_cisco_ironport); destination(d_cisco_ironport); };
+log { source(s_horizon_view_ports); destination(d_logging_horizon_view); };
+log { source(s_forescout_ports); destination(d_logging_forescout); };
+log { source(s_ise_ports); destination(d_logging_ise); };
+log { source(s_pcf_prod_ports); destination(d_logging_pcf_prod); };
+log { source(s_tms_ports); destination(d_logging_tms); };
+log { source(s_tso_ports); destination(d_logging_tso); };
+log { source(s_mcafee_ports); destination(d_logging_mcafee); };
+log { source(s_esxi_ports); destination(d_logging_esxi); };
+log { source(s_palo_alto_ports); destination(d_logging_palo_alto); };
+log { source(s_cisco_stealthwatch); destination(d_logging_cisco_stealthwatch); };
+log { source(s_tls_ports); filter(f_cylance); destination(d_logging_cylance); };
+log { source(s_tls_ports); filter(f_mvision); destination(d_logging_mvision); };
+log { source(s_f5_ports); destination(d_logging_f5); };
+log { source(s_aggregation); filter(f_hsg); destination(d_logging_hsg); };
+log { source(s_cisco_mse); destination(d_cisco_mse); };
+log { source(s_cisco_vcsc_metrics); destination(d_cisco_vcsc_metrics); };
+log { source(s_cisco_vcsc_syslog); destination(d_cisco_vcsc_syslog); };
+log { source(s_cisco_vtc_tc_devices); destination(d_cisco_vtc_tc_devices); };
+log { source(s_cisco_vtc_ce_devices); destination(d_cisco_vtc_ce_devices); };
+log { source(s_mcafee_socom_esm); destination(d_logging_mcafee_socom_esm); };
+log { source(s_aggregation); filter(f_sg); destination(d_logging_sg); };
+# Source additional configuration files (.conf extension only)
+@include "/etc/syslog-ng/conf.d/*.conf"

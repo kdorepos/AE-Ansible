@@ -1,0 +1,16 @@
+---
+- name: Check if splunk is already installed
+  stat:
+    path: "{{ splunk_preinstalled }}"
+  register: st
+
+- name: Enable splunk repo
+  shell: "subscription-manager repos --enable={{ splunk_repo }}"
+
+- name: Install splunk
+  yum:
+    name: splunk
+    state: present
+
+- name: Disable splunk repo
+  shell: "subscription-manager repos --disable={{ splunk_repo }}"

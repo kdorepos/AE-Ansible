@@ -1,0 +1,43 @@
+---
+- name: Deploy ansible from gitlab
+  hosts: TOWER
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Find ansible-playbook pids
+      shell: "ps -aux | grep 'ansible-playbook' | grep -vE 'misc-deploy_ansible.yml|grep' | awk '{print $2}'"
+      register: pids_of_ansible
+      changed_when: "'NONSENSE' in pids_of_ansible.stdout"
+
+    - name: Wait for processes to clear
+      wait_for:
+        path: "/proc/{{ item }}/status"
+        state: absent
+      with_items: "{{ pids_of_ansible.stdout_lines }}"
+
+    - name: Remove local changes
+      shell: git clean -df
+      args:
+        chdir: /opt/ansible
+
+    - name: Download new ansible repository
+      git:
+        repo: https://oauth2:{{ gitlab_pat_for_ansible }}@git.domain/project/automation/ansible.git
+        dest: /opt/ansible
+        update: yes
+        force: yes
+      become: false
+
+    - name: Set permissions on ansible directory
+      shell: chown -R ansible.svc:redhat-admins /opt/ansible
+      args:
+        warn: false
+
+    - name: Send wall message
+      shell: "echo 'A new version of Ansible has been deployed.' | wall"
+      args:
+        warn: false

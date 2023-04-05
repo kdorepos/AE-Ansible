@@ -1,0 +1,100 @@
+######################## LICENSE MANAGER
+[ALL_HQ_LM]
+licensemanager.domain
+
+######################## DEPLOYMENT SERVER
+[ALL_HQ_DS]
+deploymentserver.domain
+
+######################## HEAVY FORWARDER
+[ALL_HQ_HF]
+heavyforwarder[01:02].domain
+
+######################## CLUSTER MANAGER
+[ALL_HQ_CM]
+clustermanager.domain
+
+######################## SEARCH HEADS
+[ALL_HQ_SH]
+searchhead[01:04]-ne.domain
+
+######################## INDEXERS
+[ALL_HQ_IDX]
+n000cesp0[01:12]-ne.domain
+
+######################## SYSLOG
+[ALL_HQ_SYSLOG]
+syslog.domain
+
+[ALL_HQ_SC4S]
+sc4s.domain
+
+######################## SITE GROUPS
+[ALL_HQ:children]
+ALL_HQ_LM
+ALL_HQ_CM
+ALL_HQ_DS
+ALL_HQ_SH
+ALL_HQ_HF
+ALL_HQ_IDX
+ALL_HQ_SYSLOG
+
+[ALL_HQ_SPLUNK:children]
+ALL_HQ_LM
+ALL_HQ_CM
+ALL_HQ_DS
+ALL_HQ_SH
+ALL_HQ_HF
+ALL_HQ_IDX
+
+######################## ENTERPRISE GROUPS
+[ALL_SPLUNK:children]
+ALL_LM
+ALL_CM
+ALL_DS
+ALL_SH
+ALL_IDX
+ALL_SYSLOG
+
+[ALL_SPLUNK_ENTERPRISE:children]
+ALL_LM
+ALL_CM
+ALL_DS
+ALL_SH
+ALL_IDX
+ALL_HF
+
+[ALL_NON_IDX:children]
+ALL_LM
+ALL_CM
+ALL_DS
+ALL_SH
+
+[ALL_SH:children]
+ALL_HQ_SH
+
+[ALL_LM:children]
+ALL_HQ_LM
+
+[ALL_DS:children]
+ALL_HQ_DS
+
+[ALL_IDX:children]
+ALL_HQ_IDX
+
+[ALL_SYSLOG:children]
+ALL_HQ_SYSLOG
+
+[ALL_CM:children]
+ALL_HQ_CM
+
+[ALL_HF:children]
+ALL_HQ_HF
+
+[ALL_SH:children]
+ALL_HQ_SH
+
+######################## VARS
+[all:vars]
+ansible_user = ansible.svc
+ansible_ssh_private_key_file = ~/.ssh/ansible.svc

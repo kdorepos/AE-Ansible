@@ -1,0 +1,35 @@
+#- name: Replace sssd.conf
+#  copy:
+#    src: files/sssd.conf
+#    dest: /etc/sssd/sssd.conf
+#    owner: root
+#    group: root
+#    mode: 0600
+#    backup: yes
+
+#- name: Update hostname in sssd.conf
+#  lineinfile:
+#    path: /etc/sssd/sssd.conf
+#    regexp: '^ipa_hostname ='
+#    line: "ipa_hostname = {{ ansible_hostname }}.domain"
+
+- name: Create CA Cert directory
+  file:
+    path: /etc/openldap/cacerts
+    state: directory
+    mode: '0700'
+
+- name: Create softlink to CA cert
+  file:
+    src: /etc/ipa/ca.crt
+    dest: /etc/openldap/cacerts/ipa-ca.crt
+    state: link
+
+- name: "Set LDAP to be used for authentication"
+  lineinfile:
+    path: /etc/sysconfig/authconfig
+    regexp: '^USELDAPAUTH='
+    line: 'USELDAPAUTH=yes'
+    create: yes
+  tags:
+    - RHEL-07-040180

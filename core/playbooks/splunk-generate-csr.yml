@@ -1,0 +1,113 @@
+---
+- name: "Generating CSR for destination machine"
+  gather_facts: true
+  hosts: all
+  become: true
+  become_user: root
+  become_method: sudo
+  vars_prompt:
+    - name: Ansible_cname
+      prompt: "What is this machine's CNAME? Leave blank if there is not one."
+      private: no
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+  vars:
+    certs_dir: /etc/pki/tls/certs
+    group_files: /opt/ansible/group_files
+    san_file: san.cnf
+    ansible_longcname: "{{ ansible_cname }}.domain"
+    splunk_certs_dir: /opt/splunk/etc/auth
+
+  tasks:  
+#    - name: "Install rsync package"
+#      yum:
+#        name: rsync
+#        state: present
+
+#    - name: "Generate an OpenSSL private key with a different size (2048 bits)"
+#      openssl_privatekey:
+#        path: "{{ certs_dir }}/{{ ansible_hostname }}.key"
+#        size: 2048
+
+    - name: "Copy san.cnf file over to destination"
+      copy:
+        src: "{{ group_files }}/san.cnf"
+        dest: "{{ certs_dir }}/san.cnf"
+        group: xadmin
+        owner: xadmin
+        mode: "0644"
+
+    - name: "Set fqdn in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_fqdn
+        replace: "{{ ansible_fqdn }}"
+    
+    - name: "Set shortname in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_short
+        replace: "{{ ansible_hostname }}"
+  
+    - name: "Set ip (ens160) in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_ip
+        replace: "{{ ansible_ens160.ipv4.address }}"
+      when: ansible_ens160.ipv4.address is defined
+      ignore_errors: true
+
+    - name: "Set ip (eth0) in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_ip
+        replace: "{{ ansible_eth0.ipv4.address }}"
+      when: ansible_eth0.ipv4.address is defined
+      ignore_errors: true
+
+    - name: "Set ip (ens33) in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_ip
+        replace: "{{ ansible_ens33.ipv4.address }}"
+      when: ansible_ens33.ipv4.address is defined
+      ignore_errors: true
+
+    - name: "Set CNAME in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_cname
+        replace: "{{ ansible_cname }}"
+      when: ansible_cname is defined
+
+    - name: "Set long CNAME in san.cnf"
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_longcname
+        replace: "{{ ansible_longcname }}"
+      when: ansible_longcname is defined
+  
+    - name: "Generate an OpenSSL private key with a different size (2048 bits)"
+      command: "/opt/splunk/bin/splunk cmd openssl genrsa -aes256 -passout pass:{{ splunk_web_ssl_pwd }} -out {{ splunk_certs_dir }}/{{ ansible_hostname }}.key 2048"
+      become_user: splunk
+      ignore_errors: true
+      no_log: true   
+ 
+    - name: "Strip out the private key password"
+      command: "/opt/splunk/bin/splunk cmd openssl rsa -in {{ splunk_certs_dir }}/{{ ansible_hostname }}.key -out {{ splunk_certs_dir }}/{{ ansible_hostname }}.key -passin pass:{{ splunk_web_ssl_pwd }}"
+      become_user: splunk
+      no_log: true
+      
+    - name: "Generate CSR based on san.cnf"
+      shell: "/opt/splunk/bin/splunk cmd openssl req -new -config {{ certs_dir }}/san.cnf -out {{ splunk_certs_dir }}/{{ ansible_hostname }}.csr -key {{ splunk_certs_dir }}/{{ ansible_hostname }}.key"
+      become_user: splunk
+
+    - name: "Move generated private key and CSR to {{ certs_dir }}"
+      shell: "mv /opt/splunk/etc/auth/{{ ansible_hostname }}.* /etc/pki/tls/certs/"    
+
+    - name: "Here's your CSR"
+      fetch:
+        dest: "{{ certs_dir }}/jcu_csr/{{ ansible_hostname }}.csr"
+        src: "{{ certs_dir }}/{{ ansible_hostname }}.csr"
+        flat: yes

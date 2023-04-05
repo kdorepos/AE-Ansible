@@ -1,0 +1,24 @@
+---
+- name: Create pass4SymmKey app
+  file:
+    path: /opt/splunk/etc/apps/chaos_all_pass4SymmKey/local
+    state: directory
+    owner: splunk
+    group: splunk
+
+- name: Create server.conf 
+  file: 
+    path: /opt/splunk/etc/apps/chaos_all_pass4SymmKey/local/server.conf
+    state: touch
+    owner: splunk
+    group: splunk
+
+- name: Add stanza name and pass4SymmKey
+  blockinfile:
+    path: /opt/splunk/etc/apps/chaos_all_pass4SymmKey/local/server.conf
+    block: |
+      [general]
+      pass4SymmKey = {{ splunk_general_pass4symmkey }}
+  tags: pass4SymmKey
+  no_log: true
+      

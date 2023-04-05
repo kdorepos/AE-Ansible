@@ -1,0 +1,16 @@
+SPLUNK_NAME=`grep host /opt/splunk/etc/system/local/inputs.conf | cut -d " " -f 3`
+export PS1="[$SPLUNK_NAME \W \A] "
+export SPLUNK_HOME=/opt/splunk
+
+WHOAMI=`who mom likes | awk '{ print $1 }'`
+status=`/opt/splunk/bin/splunk status | grep not`
+
+if [[ $status == "not" ]]; then
+show= "not running"
+else
+show="running"
+fi
+
+echo ""
+echo "Hey, $WHOAMI! Splunk is $show!"
+echo ""

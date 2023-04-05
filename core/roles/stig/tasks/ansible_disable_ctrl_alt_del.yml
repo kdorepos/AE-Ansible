@@ -1,0 +1,4 @@
+- name: Disable Ctrl-Alt-Del Reboot Activation
+  systemd:
+    name: ctrl-alt-del.target
+    masked: yes

@@ -1,0 +1,91 @@
+---
+- name: Install and configure sc4s
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Add sysctl settings
+    blockinfile:
+      path: /etc/sysctl.conf
+      block: |
+        net.core.rmem_default = 17039360
+        net.core.rmem_max = 17039360
+        net.ipv4.ip_forward = 1
+
+  - name: Apply sysctl settings
+    shell: sysctl -p 
+
+  - name: Install podman
+    package:
+      name: podman
+      state: present
+
+  - name: Get package
+    get_url:
+      url: https://{{ groups['SATELLITE'][0] }}/pub/sc4s/scs.tar.gz
+      dest: /root/scs.tar.gz
+      validate_certs: no
+
+  - name: Load container
+    shell: podman load < scs.tar.gz
+    args:
+      chdir: /root
+    register: image_location
+
+  - name: Parse loaded container for location
+    set_fact:
+      loaded_image: "{{ image_location.stdout | regex_search(regexp,'\\1') }}"
+    vars:
+      regexp: 'Loaded\simage\(s\)\:\s(.*)$'
+
+  - name: Tag container
+    shell: podman tag {{ loaded_image }} sc4slocal:latest
+
+  - name: Create container service file
+    copy:
+      src: /opt/ansible/group_files/sc4s.service
+      dest: /lib/systemd/system/sc4s.service
+
+  - name: Create podman volume
+    shell: podman volume create splunk-sc4s-var
+
+  - name: Create sc4s documentaries
+    file: 
+      path: "/opt/{{ item }}"
+      state: directory
+    with_items:
+      - sc4s
+      - sc4s/local
+      - sc4s/archive
+      - sc4s/tls
+
+  - pause:
+      prompt: "Please enter the HEC token for your Splunk destination: "
+      echo: yes
+    register: prompt_hec
+
+  - set_fact:
+      hec: "{{ prompt_hec.user_input }}"
+
+  - pause:
+      prompt: "Please enter the IP or FQDN of the heavy forwarder: "
+      echo: yes
+    register: prompt_dest
+
+  - set_fact:
+      dest: "{{ prompt_dest.user_input }}"
+
+  - name: Create env_file
+    blockinfile:
+      path: /opt/sc4s/env_file
+      block: |
+      SPLUNK_HEC_URL=https://'{{ dest }}':8088
+      SPLUNK_HEC_TOKEN='{{ hec }}'
+
+  - name: Configure sc4s systemd
+    systemd:
+      name: sc4s
+      state: started
+      enabled: yes
+      daemon_reload: yes

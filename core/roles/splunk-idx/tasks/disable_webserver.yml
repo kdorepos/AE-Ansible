@@ -1,0 +1,4 @@
+---
+- name: Disable webserver
+  shell: "/opt/splunk/bin/splunk disable webserver"
+  become_user: splunk

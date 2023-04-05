@@ -1,0 +1,13 @@
+---
+- hosts: "{{ group }}"
+  become: true
+
+  vars_prompt:
+    - name: Run_common
+      prompt: "Wanna run splunk-common?"
+      default: "Y"
+      private: no
+
+  roles:
+  - { role: splunk-common, when: run_common == "Y" }
+  - splunk-idx

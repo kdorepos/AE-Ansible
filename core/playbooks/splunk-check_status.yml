@@ -1,0 +1,18 @@
+---
+- name: Check splunk status and run, if necessary
+  hosts: ALL_SPLUNK
+  become: true
+  become_user: splunk
+  gather_facts: false
+
+  tasks:
+    - name: Check splunk status
+      shell: "/opt/splunk/bin/splunk status"
+      register: splunk_status
+      failed_when: "'not running' in splunk_status.stdout"
+      changed_when: "'NONSENSE' in splunk_status.stdout"
+      ignore_errors: true
+
+    - name: Run splunk, if needed
+      shell: "/opt/splunk/bin/splunk start"
+      when: splunk_status.stdout == "splunkd is not running."

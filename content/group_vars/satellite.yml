@@ -1,0 +1,17 @@
+---
+satellite_ip: 10.1.225.28
+satellite_fqdn: n001usvrrsatx01.domain
+satellite_host: n001usvrrsatx01
+satellite_org: Splunk
+
+satellite_rhv_curl: "'https://n001usvrrsatx01.domain/register?activation_keys=AKV_RHV&force=true&lifecycle_environment_id=4&location_id=2&organization_id=1&update_packages=false' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo2LCJpYXQiOjE2NzUyMjAwNjAsImp0aSI6IjhlZWFkNmNiYTdiN2YzZDQ3ZTQwNjAxNTk2MjA1ZTM0OTAyZGRmYzUyZWM0YTVhZGY5OWRjOTgyN2E1YjNlMGYiLCJzY29wZSI6InJlZ2lzdHJhdGlvbiNnbG9iYWwgcmVnaXN0cmF0aW9uI2hvc3QifQ.UlaulSdRUqwwByGGqyHvsAnKyer9LFK5Eheq_Ar68uo'"
+satellite_rhel7_curl: "'https://n001usvrrsatx01.domain/register?activation_keys=AKV_RHEL7&force=true&lifecycle_environment_id=4&location_id=2&organization_id=1&update_packages=false' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo2LCJpYXQiOjE2NzUyMTk4MzQsImp0aSI6IjQ2YTA2ODY4NzA2NThiYTcxOTUwYmM3MjMyYzQxN2E5NDQ5YWZlNzRmODA3NjNlZjhlMzM5MjA4N2ExNzUzZTMiLCJzY29wZSI6InJlZ2lzdHJhdGlvbiNnbG9iYWwgcmVnaXN0cmF0aW9uI2hvc3QifQ.RjXEmrtFY0yNremqwEzAXjXEK7nkhmRS24M8wPukdBw'"
+satellite_rhel8_curl: "'https://n001usvrrsatx01.domain/register?activation_keys=AKV_RHEL8&location_id=2&operatingsystem_id=2&organization_id=1&update_packages=false' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo2LCJpYXQiOjE2NzUwOTE2MzcsImp0aSI6ImYyMWU2MzY4YzVkYzRlMGQ3ZGViZWI5MTE4ZWVmYWQwM2QxMDM0NTY4MTNjMjNlNmQzMzljN2Y2OGRmOWY2MTMiLCJzY29wZSI6InJlZ2lzdHJhdGlvbiNnbG9iYWwgcmVnaXN0cmF0aW9uI2hvc3QifQ.PjGf8G3w-nnzcEvv5jY2dSFxs-iv2tNq84SJpl0YwoU'"
+
+
+satellite_fwd1_sub:
+- 10.236.57
+- 10.236.40
+satellite_fwd2_sub:
+- 10.236.72
+- 10.236.24

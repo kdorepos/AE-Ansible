@@ -1,0 +1,333 @@
+--- 
+- name: "upgrade splunk version"
+  hosts: ALL_{{ site }}_SPLUNK
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: true
+
+  tasks: 
+    - name: Enable splunk repo
+      shell: subscription-manager repos --enable=Splunk_Splunk_Splunk
+
+    - name: Clean repo
+      shell: yum clean all
+
+- name: Update cluster master
+  hosts: ALL_{{ site }}_CM
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  vars_files: /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Stop splunk
+      shell: ~/bin/splunk stop
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Update splunk
+      yum: 
+        name: splunk
+        state: latest
+
+    - name: Set recursive permissions on /opt/splunk
+      shell: chown -R splunk:splunk /opt/splunk
+
+    - name: Restore selinux settings on /opt/splunk
+      shell: restorecon -R /opt/splunk
+
+    - name: Remove splunk server.pem
+      file:
+        path: /opt/splunk/etc/auth/server.pem
+        state: absent
+
+    - name: Start splunk
+      shell: ~/bin/splunk start --accept-license --answer-yes
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Put cluster into maintenance mode
+      shell: "~/bin/splunk enable maintenance-mode --answer-yes -auth admin:{{ splunk_user_pwd }}"
+      become_user: splunk
+
+    - name: Check cluster master before proceeding
+      pause:
+        seconds: 60
+
+- name: Disable 9998 on indexers
+  hosts: ALL_{{ site }}_IDX
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  tasks:
+    - firewalld:
+        port: 9998/tcp
+        state: disabled
+
+- name: Update indexers
+  hosts: ALL_{{ site }}_IDX
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+  serial: 1
+
+  tasks:
+    - name: Stop splunk
+      shell: ~/bin/splunk stop
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Update splunk
+      yum: 
+        name: splunk
+        state: latest
+    
+    - name: Set recursive permissions on /opt/splunk
+      shell: chown -R splunk:splunk /opt/splunk
+
+    - name: Restore selinux settings on /opt/splunk
+      shell: restorecon -R /opt/splunk
+
+    - name: Remove splunk server.pem
+      file:
+        path: /opt/splunk/etc/auth/server.pem
+        state: absent
+
+    - name: Start splunk
+      shell: ~/bin/splunk start --accept-license --answer-yes
+      become_user: splunk
+      args:
+        warn: false
+
+- name: Take cluster master out of maintenance mode
+  hosts: ALL_{{ site }}_CM
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  vars_files: /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Check cluster master for everything to be up first
+      pause:
+        seconds: 60
+
+    - name: Disable maintenance mode
+      shell: "~/bin/splunk disable maintenance-mode -auth admin:{{ splunk_user_pwd }}"
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Check cluster master before proceeding
+      pause:
+        seconds: 60
+
+#- name: Stop search head
+#  hosts: ALL_{{ site }}_SH
+#  become: true
+#  become_user: root
+#  become_method: sudo
+#  gather_facts: false
+
+#  tasks:
+#    - name: Stop splunk
+#      shell: ~/bin/splunk stop
+#      become_user: splunk
+#      args:
+#        warn: false
+
+- name: Let indexers normalize
+  hosts: ALL_{{ site }}_IDX
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  tasks:
+    - firewalld:
+        port: 9998/tcp
+        state: enabled
+
+#- name: Update search head
+#  hosts: ALL_{{ site }}_SH
+#  become: true
+#  become_user: root
+#  become_method: sudo
+#  gather_facts: false
+#
+#  tasks:
+#    - name: Update splunk
+#      yum: 
+#        name: splunk
+#        state: latest
+#    
+#    - name: Set recursive permissions on /opt/splunk
+#      shell: chown -R splunk:splunk /opt/splunk
+#
+#    - name: Restore selinux settings on /opt/splunk
+#      shell: restorecon -R /opt/splunk
+#
+#    - name: Remove splunk server.pem
+#      file:
+#        path: /opt/splunk/etc/auth/server.pem
+#        state: absent
+#
+#    - name: Start splunk
+#      shell: ~/bin/splunk start --accept-license --answer-yes
+#      become_user: splunk
+#      args:
+#        warn: false
+#
+#    - name: Check cluster master before proceeding
+#      pause:
+#        seconds: 60
+
+- name: Update heavy forwarders
+  hosts: ALL_{{ site }}_HF
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  tasks:
+    - name: Stop splunk
+      shell: ~/bin/splunk stop
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Update splunk
+      yum: 
+        name: splunk
+        state: latest
+    
+    - name: Set recursive permissions on /opt/splunk
+      shell: chown -R splunk:splunk /opt/splunk
+
+    - name: Restore selinux settings on /opt/splunk
+      shell: restorecon -R /opt/splunk
+
+    - name: Remove splunk server.pem
+      file:
+        path: /opt/splunk/etc/auth/server.pem
+        state: absent
+
+    - name: Start splunk
+      shell: ~/bin/splunk start --accept-license --answer-yes
+      become_user: splunk
+      args:
+        warn: false
+
+- name: Update license master
+  hosts: ALL_HQ_LM
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  tasks:
+    - name: Stop splunk
+      shell: ~/bin/splunk stop
+      become_user: splunk
+      args:
+        warn: false
+      when: site == "HQ"
+
+    - name: Update splunk
+      yum: 
+        name: splunk
+        state: latest
+      when: site == "HQ"
+    
+    - name: Set recursive permissions on /opt/splunk
+      shell: chown -R splunk:splunk /opt/splunk
+      when: site == "HQ"
+
+    - name: Restore selinux settings on /opt/splunk
+      shell: restorecon -R /opt/splunk
+      when: site == "HQ"
+
+    - name: Remove splunk server.pem
+      file:
+        path: /opt/splunk/etc/auth/server.pem
+        state: absent
+      when: site == "HQ"
+
+    - name: Start splunk
+      shell: ~/bin/splunk start --accept-license --answer-yes
+      become_user: splunk
+      args:
+        warn: false
+      when: site == "HQ"
+
+- name: Update deployment server
+  hosts: ALL_DS
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  tasks:
+    - name: Stop splunk
+      shell: ~/bin/splunk stop
+      become_user: splunk
+      args:
+        warn: false
+      when: site == "HQ"
+
+    - name: Update splunk
+      yum: 
+        name: splunk
+        state: latest
+      when: site == "HQ"
+    
+    - name: Set recursive permissions on /opt/splunk
+      shell: chown -R splunk:splunk /opt/splunk
+      when: site == "HQ"
+
+    - name: Restore selinux settings on /opt/splunk
+      shell: restorecon -R /opt/splunk
+      when: site == "HQ"
+
+    - name: Remove splunk server.pem
+      file:
+        path: /opt/splunk/etc/auth/server.pem
+        state: absent
+      when: site == "HQ"
+
+    - name: Start splunk
+      shell: ~/bin/splunk start --accept-license --answer-yes
+      become_user: splunk
+      args:
+        warn: false
+      when: site == "HQ"
+
+- name: Clean up
+  hosts: ALL_{{ site }}_SPLUNK
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: false
+
+  tasks:
+    - name: Disable splunk repo
+      shell: subscription-manager repos --disable=Splunk_Splunk_Splunk
+
+    - name: Register splunk version
+      shell: ~/bin/splunk version
+      become_user: splunk
+      register: splunk_version
+
+    - name: Show splunk version for each box
+      debug:
+        msg: "{{ splunk_version.stdout }}"

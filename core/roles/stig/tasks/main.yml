@@ -1,0 +1,37 @@
+---
+- name: Include global variables
+  include_vars: /opt/ansible/{{ splunk_common_vars }}
+  loop:
+    - group_vars/rhel.yml
+    - /opt/ansible/content/secrets/main.yml
+  loop_control:
+    loop_var: splunk_common_vars
+
+- name: Deploy common role
+  include: "{{ common_tasks }}"  
+  loop:
+#    - ansible_audit_priv.yml
+#    - ansible_audit.yml
+#    - ansible_authentication.yml
+#    - ansible_disable_ctrl_alt_del.yml
+#    - ansible_disable_dccp.yml
+#    - ansible_disable_gssapi_auth.yml
+#    - ansible_disable_modprob_load_usb.yml
+#    - ansible_firewall.yml
+    - ansible_grub2.yml
+    - ansible_kernel_parameters.yml
+    - ansible_limit_password_reuse.yml
+    - ansible_no_pass_auth.yml
+    - ansible_ntp.yml
+    - ansible_password_policy.yml
+    - ansible_priviledge_separation.yml
+    - ansible_randomized_layout_va_space.yml
+    - ansible_remove_sudoers.yml
+#    - ansible_ldap_tls.yml  
+#    - ansible_aide.yml
+    - ansible_screen.yml
+    - ansible_limit_concurrent_sessions.yml  
+    - ansible_STIG_Leroy.yml
+    - ansible_disable_kdump.yml
+  loop_control:
+    loop_var: common_tasks

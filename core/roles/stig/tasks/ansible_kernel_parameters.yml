@@ -1,0 +1,94 @@
+## RHEL-07-040650 / RHEL-07-040660 / RHEL-07-040740 / RHEL-07-040640 / RHEL-07-040641 / RHEL-07-040630
+- name: XCCDF Value sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value: !!str 1
+  tags:
+    - always
+
+- name: XCCDF Value sysctl_net_ipv4_conf_all_accept_redirects_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_all_accept_redirects_value: !!str 0
+  tags:
+    - always
+
+- name: XCCDF Value sysctl_net_ipv4_conf_default_accept_redirects_value # promote to variable
+  set_fact:
+    sysctl_net_ipv4_conf_default_accept_redirects_value: !!str 0
+  tags:
+    - always
+
+- name: Ensure sysctl net.ipv4.icmp_echo_ignore_broadcasts is set
+  sysctl:
+    name: net.ipv4.icmp_echo_ignore_broadcasts
+    value: "{{ sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_icmp_echo_ignore_broadcasts
+    - RHEL-07-040630
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
+
+
+- name: Ensure sysctl net.ipv4.conf.all.accept_redirects is set
+  sysctl:
+    name: net.ipv4.conf.all.accept_redirects
+    value: "{{ sysctl_net_ipv4_conf_all_accept_redirects_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_all_accept_redirects
+    - RHEL-07-040641
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
+
+- name: Ensure sysctl net.ipv4.conf.default.accept_redirects is set
+  sysctl:
+    name: net.ipv4.conf.default.accept_redirects
+    value: "{{ sysctl_net_ipv4_conf_default_accept_redirects_value }}"
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_default_accept_redirects
+    - RHEL-07-040640
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
+
+- name: Ensure sysctl net.ipv4.ip_forward is set to 0
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 0
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_ip_forward
+    - RHEL-07-040740
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
+
+- name: Ensure sysctl net.ipv4.conf.all.send_redirects is set to 0
+  sysctl:
+    name: net.ipv4.conf.all.send_redirects
+    value: 0
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_all_send_redirects
+    - RHEL-07-040660
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
+
+- name: Ensure sysctl net.ipv4.conf.default.send_redirects is set to 0
+  sysctl:
+    name: net.ipv4.conf.default.send_redirects
+    value: 0
+    state: present
+    reload: yes
+  tags:
+    - sysctl_net_ipv4_conf_default_send_redirects
+    - RHEL-07-040650
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
+
+
+

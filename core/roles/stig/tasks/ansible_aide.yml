@@ -1,0 +1,25 @@
+- name: "Ensure AIDE is installed"
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - aide
+  tags:
+    - RHEL-07-020030
+
+- name: Replace aide_checks cron job
+  copy:
+    src: files/aide_checks
+    dest: /etc/cron.d/aide_checks
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+
+- name: Aide extend attributes
+  script: 
+    cmd: files/scripts/aide_extend_attrib.sh
+
+- name: Aide fips hash
+  script: 
+    cmd: files/scripts/aide_fips_hash.sh

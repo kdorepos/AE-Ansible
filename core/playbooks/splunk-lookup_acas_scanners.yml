@@ -1,0 +1,55 @@
+---
+- name: Lookup acas scanners, return IPs
+  hosts: n000cesp013-ne.domain
+  become: true
+  become_user: splunk
+  gather_facts: false
+
+  vars:
+    lookup_location: /opt/splunk/etc/apps/n_hq_es_j6-ea-hub/lookups
+    og_csv: j6-ae-acas_scanners_names.csv
+    hostname_csv: acas_scanners_hostnames.csv
+    cutinfo_csv: cut_info.csv
+    hostname_and_ip_csv: acas_scanners_hostnames_ips.csv
+    combined_csv: j6-ae-acas_scanners.csv
+
+  tasks:
+    - name: "grab headerline of {{ og_csv }}"
+      shell: "head -n1 {{ og_csv }}"
+      register: headerline
+      args:
+        chdir: "{{ lookup_location }}"
+
+    - name: Remove extra info
+      shell: "sed -e '1d' {{ og_csv }} | cut -d, -f1 > {{ hostname_csv }}"
+      args:
+        chdir: "{{ lookup_location }}"
+
+    - name: Grab extra info
+      shell: "sed -e '1d' {{ og_csv }} | cut -d, -f3-20 > {{ cutinfo_csv }}"
+      args:
+        chdir: "{{ lookup_location }}"
+
+    - name: Do the dns lookup thing
+      shell: 'for h in `cat {{ hostname_csv }}`; do printf "$h,$(dig +short "$h".domain),\n"; done > {{ hostname_and_ip_csv }}'
+      args:
+        chdir: "{{ lookup_location }}"
+
+    - name: Paste files together
+      shell: 'paste -d "" {{ hostname_and_ip_csv }} {{ cutinfo_csv }} > {{ combined_csv }}'
+      args:
+        chdir: "{{ lookup_location }}"
+
+    - name: "prepend headerline to {{ combined_csv }}"
+      shell: 'sed -i "1i{{ headerline.stdout }}" {{ combined_csv }}'
+      args:
+        chdir: "{{ lookup_location }}"
+    
+    - name: Clean up edited files
+      file:
+        path: "{{ lookup_location }}/{{ item }}"
+        state: absent
+      with_items: 
+        - "{{ hostname_csv }}"
+        - "{{ cutinfo_csv }}"
+        - "{{ hostname_and_ip_csv }}"

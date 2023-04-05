@@ -1,0 +1,31 @@
+---
+- name: Include global splunk variables 
+  include_vars: /opt/ansible/group_vars/splunk.yml
+
+- name: Deploy splunk-common role
+  include_role:
+    name: splunk-common
+
+- name: Deploy splunk-forwarder role
+  include: "{{ splunk_forwarder_tasks }}"
+  loop:
+    - install.yml
+  loop_control:
+    loop_var: splunk_forwarder_tasks
+
+- name: Run splunk-common post tasks
+  include_tasks: "/opt/ansible/roles/splunk-common/tasks/{{ splunk_common_tasks }}"
+  loop:
+    - autostart.yml
+#    - pass4SymmKey.yml
+#    - ulimits_thp.yml
+    
+  loop_control:
+    loop_var: splunk_common_tasks
+
+- name: Post install tasks
+  include: "{{ splunk_post_tasks }}"
+  loop:
+    - start-splunk.yml
+  loop_control:
+    loop_var: splunk_post_tasks

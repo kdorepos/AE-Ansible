@@ -1,0 +1,12 @@
+---
+- name: Run a debug refresh
+  hosts: all
+  become: true
+  become_user: splunk
+  gather_facts: false
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Run remote saerch
+      shell: "/opt/splunk/bin/splunk search '| refresh' -auth admin:{{ splunk_user_pwd }}"

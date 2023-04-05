@@ -1,0 +1,14 @@
+---
+- name: Deploys bash profile for the splunk user
+  hosts: ALL_SPLUNK
+  become: true
+  become_user: splunk
+  gather_facts: false
+
+  tasks:
+    - name: Copy bash profile out to remote machine
+      copy:
+        src: /opt/ansible/group_files/splunk_bash_profile
+        dest: /opt/splunk/.bash_profile
+        owner: splunk
+        group: splunk

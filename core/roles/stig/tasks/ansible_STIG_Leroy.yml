@@ -1,0 +1,41 @@
+- name: "Set fact: Package manager reinstall command (yum)"
+  set_fact:
+    package_manager_reinstall_cmd: yum reinstall -y
+  when: (ansible_distribution == "RedHat" or ansible_distribution == "OracleLinux") and True
+
+- name: "Read files with incorrect hash"
+  shell: "sudo rpm -Va | grep -E '^..5.* /(bin|sbin|lib|lib64|usr)/' | awk '{print $NF}'"
+  args:
+    warn: False # Ignore ANSIBLE0006, we can't fetch files with incorrect hash using rpm module
+  register: files_with_incorrect_hash
+  changed_when: False
+  when: (package_manager_reinstall_cmd is defined) and True
+  check_mode: no
+
+- name: "Reinstall packages of files with incorrect hash"
+  shell: "{{ package_manager_reinstall_cmd }} $(sudo rpm -qf '{{ item }}')"
+  args:
+    warn: False # Ignore ANSIBLE0006, this task is flexible with regards to package manager
+  with_items: "{{ files_with_incorrect_hash.stdout_lines }}"
+  when: (package_manager_reinstall_cmd is defined and (files_with_incorrect_hash.stdout_lines | length > 0)) and True
+
+- name: Ensure GPG check Enabled for Local Packages (Yum)
+  ini_file:
+    dest: /etc/yum.conf
+    section: main
+    option: localpkg_gpgcheck
+    value: 1
+    create: True
+
+- name: Configure Kerberos 5 Encryption in Audit Event Multiplexor (audispd)
+  lineinfile:
+    dest: /etc/audisp/audisp-remote.conf
+    line: enable_krb5 = yes
+    regexp: ^\s*enable_krb5\s*=\s*.*$
+    state: present
+    create: true
+
+- name: RPM Ownership Script
+  script:
+    cmd: files/scripts/rpm_ownership.sh
+  ignore_errors: true

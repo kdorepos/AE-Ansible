@@ -1,0 +1,60 @@
+---
+- name: Formats splunk drive
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Install lvm2 package
+    yum:
+      name: lvm2
+      state: present
+   
+  - name: Grab disk with 300GiB
+    shell: str=`fdisk -l | grep 322.1` && echo "${str:5:8}"
+    register: disk
+  
+  - name: Create a new primary partition on {{ disk.stdout }}
+    parted:
+      device: "{{ disk.stdout }}"
+      number: 1
+      state: present
+  
+  - name: Create physical volume for {{ disk.stdout }}1
+    shell: "pvcreate {{ disk.stdout }}1 -ff"
+  
+  - name: Create volume group for opt
+    lvg:
+      vg: opt
+      pvs: "{{ disk.stdout }}1"
+  
+  - name: Create logical volume for opt
+    lvol:
+      vg: opt
+      lv: opt
+      size: 100%FREE
+  
+  - name: Format new logical volume
+    shell: "mkfs.xfs /dev/opt/opt -L OPT"
+  
+  - name: Create /mnt/opt/splunk directory
+    file:
+      path: /mnt/opt/splunk
+      state: directory
+      mode: '0755'
+      owner: splunk
+      group: splunk
+  
+  - name: Add new drive to /etc/fstab
+    mount:
+      path: /mnt/opt/splunk
+      src: /dev/opt/opt
+      fstype: xfs
+      state: present
+  
+  - name: Mount that new drive
+    mount:
+      path: /mnt/opt/splunk
+      src: /dev/opt/opt
+      fstype: xfs
+      state: mounted

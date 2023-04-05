@@ -1,0 +1,42 @@
+---
+- hosts: all,!ALL_RHVH,!SATELLITE,!ALL_500A_CAPSULE,!ALL_600A_CAPSULE
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check var space
+      shell: df /var --output\=avail | tail -1 | awk '{print $1}'
+      register: var_freespace
+
+    - name: Check var/log space
+      shell: df /var/log --output\=avail | tail -1 | awk '{print $1}'
+      register: varlog_freespace
+
+    - fail:
+        msg: /var does not have the minimum space required to continue (1GB required)
+      when: var_freespace.stdout|int <= 1000000
+
+    - fail:
+        msg: /var/log does not have the minimum space required to continue (1GB required)
+      when: varlog_freespace.stdout|int <= 1000000
+
+    - name: Clean local yum database
+      shell: "yum clean all"
+
+    - name: Disable all repos but core
+      shell: subscription-manager repos --disable=* --enable=rhel-7-server-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-rh-common-rpms
+
+    - name: Run update
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Check for restart
+      shell: needs-restarting -r | grep -E "is required|is probably not" -o
+      register: restart_check
+
+    - name: Requires restart
+      debug:
+        msg: Requires Restart!!
+      when:
+        - restart_check.stdout is defined and restart_check.stdout|lower == "is required"

@@ -1,0 +1,82 @@
+---
+users:
+  - site: "000"
+    accounts:
+      - username: t100ccmbk
+        path: 000A/000A_CUCM/CCM_BACKUPS
+      - username: t100ccmlog
+        path: 000A/000A_CUCM/CCM_LOGS
+      - username: t100ccmsme
+        path: 000A/000A_CUCM/CCM_SME
+      - username: t100ccmcdr
+        path: 000A/000A_CUCM/CCM_CDRS
+      - username: t100ccmupdate
+        path: 000A/000A_CUCM/CCM_UPDATES
+
+  - site: "100"
+    accounts:
+      - username: <inser username>
+        path: 100A/100A_CUCM/CCM_BACKUPS
+      - username: <inser username>
+        path: 100A/100A_CUCM/CCM_LOGS
+      - username: <inser username>
+        path: 100A/100A_CUCM/CCM_SME
+      - username: <inser username>
+        path: 100A/100A_CUCM/CCM_CDRS
+      - username: <inser username>
+        path: 100A/100A_CUCM/CCM_UPDATES
+
+  - site: "200"
+    accounts:
+      - username: <inser username>
+        path: 200A/200A_CUCM/CCM_BACKUPS
+      - username: <inser username>
+        path: 200A/200A_CUCM/CCM_LOGS
+      - username: <inser username>
+        path: 200A/200A_CUCM/CCM_SME
+      - username: <inser username>
+        path: 200A/200A_CUCM/CCM_CDRS
+      - username: <inser username>
+        path: 200A/200A_CUCM/CCM_UPDATES
+
+  - site: "300"
+    accounts:
+      - username: <inser username>
+        path: 300A/300A_CUCM/CCM_BACKUPS
+      - username: <inser username>
+        path: 300A/300A_CUCM/CCM_LOGS
+      - username: <inser username>
+        path: 300A/300A_CUCM/CCM_SME
+      - username: <inser username>
+        path: 300A/300A_CUCM/CCM_CDRS
+      - username: <inser username>
+        path: 300A/300A_CUCM/CCM_UPDATES
+
+  - site: "500"
+    accounts:
+      - username: <inser username>
+        path: 500A/500A_CUCM/CCM_BACKUPS
+      - username: <inser username>
+        path: 500A/500A_CUCM/CCM_LOGS
+      - username: <inser username>
+        path: 500A/500A_CUCM/CCM_SME
+      - username: <inser username>
+        path: 500A/500A_CUCM/CCM_CDRS
+      - username: <inser username>
+        path: 500A/500A_CUCM/CCM_UPDATES
+
+  - site: "600"
+    accounts:
+      - username: <inser username>
+        path: 600A/600A_CUCM/CCM_BACKUPS
+      - username: <inser username>
+        path: 600A/600A_CUCM/CCM_LOGS
+      - username: <inser username>
+        path: 600A/600A_CUCM/CCM_SME
+      - username: <inser username>
+        path: 600A/600A_CUCM/CCM_CDRS
+      - username: <inser username>
+        path: 600A/600A_CUCM/CCM_UPDATES
+
+options:
+  svcaccount: 'yes'

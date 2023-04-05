@@ -1,0 +1,10 @@
+- name: Ensure kernel module 'dccp' is disabled
+  lineinfile:
+    create: yes
+    dest: "/etc/modprobe.d/dccp.conf"
+    regexp: 'dccp'
+    line: "install dccp /bin/true"
+  tags:
+    - RHEL-07-020101
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")

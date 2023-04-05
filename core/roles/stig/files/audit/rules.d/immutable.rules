@@ -1,0 +1,3 @@
+
+# Set the audit.rules configuration to halt system upon audit failure per security requirements
+-f 2

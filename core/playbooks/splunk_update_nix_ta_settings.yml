@@ -1,0 +1,42 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install sysstat service
+      yum:
+        name: sysstat
+        state: present
+
+    - name: Install lsof service
+      yum:
+        name: lsof
+        state: present
+
+    - name: Update auditd group to splunk
+      lineinfile:
+        path: /etc/audit/auditd.conf
+        regexp: '^log_group ='
+        line: 'log_group = splunk'
+
+    - name: Restart auditd
+      service:
+        name: auditd
+        state: restarted
+      ignore_errors: True
+
+    - name: Set perms on messages and secure
+      shell: 'setfacl -m g:splunk:r /var/log/messages && setfacl -m g:splunk:r /var/log/secure'
+
+    - name: Add perms to log rotate
+      blockinfile:
+        path: /etc/logrotate.d/Splunk_ACLs
+        create: yes
+        block: |
+          {
+              postrotate
+                  /usr/bin/setfacl -m g:splunk:r /var/log/messages
+                  /usr/bin/setfacl -m g:splunk:r /var/log/secure
+              endscript
+          }

@@ -1,0 +1,11 @@
+---
+- name: Include global splunk variables
+  include_vars: /opt/ansible/group_vars/splunk.yml
+
+- name: Include vault
+  include_vars: /opt/ansible/content/secrets/main.yml
+
+- name: Deploy splunk-cm role
+  include_tasks: "{{ item }}"
+  loop:
+    - firewalld.yml

@@ -1,0 +1,15 @@
+- name: XCCDF Value var_accounts_max_concurrent_login_sessions # promote to variable
+  set_fact:
+    var_accounts_max_concurrent_login_sessions: !!str 10
+  tags:
+    - always
+
+- name: "Limit the Number of Concurrent Login Sessions Allowed Per User"
+  lineinfile:
+    state: present
+    dest: /etc/security/limits.conf
+    insertbefore: "^# End of file"
+    regexp: "^#?\\*.*maxlogins"
+    line: "*           hard    maxlogins     {{ var_accounts_max_concurrent_login_sessions }}"
+  tags:
+    - RHEL-07-040000

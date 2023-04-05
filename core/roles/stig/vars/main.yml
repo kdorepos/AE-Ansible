@@ -1,0 +1,3 @@
+---
+oscap_profile: stig-rhel7-disa
+oscap_policy: ssg-rhel7-xccdf

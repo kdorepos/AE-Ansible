@@ -1,0 +1,82 @@
+---
+- name: "Generating CSR for destination machine"
+  gather_facts: true
+  hosts: all
+  become: true
+  become_user: root
+  become_method: sudo
+  vars_prompt:
+    - name: Ansible_cname
+      prompt: "What is this machine's CNAME? Leave blank if there is not one."
+      private: no
+
+  vars:
+    certs_dir: /etc/pki/tls/certs
+    local_certs_dir: /tmp/remote_certs
+    group_files: /opt/ansible/group_files
+    san_file: san.cnf
+    domain: domain
+    ansible_longcname: "{{ ansible_cname }}.{{ domain }}"
+    fqdn: "{{ ansible_hostname }}.{{ domain }}"
+
+  tasks:  
+    - name: Generate an OpenSSL private key with a different size (4096 bits)
+      openssl_privatekey:
+        path: "{{ certs_dir }}/{{ ansible_hostname }}.key"
+        size: 4096
+
+    - name: Copy san.cnf file over to destination
+      copy:
+        src: "{{ group_files }}/san.cnf"
+        dest: "{{ certs_dir }}/san.cnf"
+        group: xadmin
+        owner: xadmin
+        mode: "0644"
+
+    - name: Set fqdn in san.cnf
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_fqdn
+        replace: "{{ fqdn }}"
+    
+    - name: Set shortname in san.cnf
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_short
+        replace: "{{ ansible_hostname }}"
+  
+    - name: Set ip in san.cnf
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_ip
+        replace: "{{ ansible_default_ipv4.address }}"
+
+    - name: Remove cname lines, if cname var is not defined
+      lineinfile:
+        path: /etc/pki/tls/certs/san.cnf
+        state: absent
+        regexp: "cname"
+      when: ansible_cname == ""
+
+    - name: Set CNAME in san.cnf
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_cname
+        replace: "{{ ansible_cname }}"
+      when: ansible_cname != ""
+
+    - name: Set long CNAME in san.cnf
+      replace:
+        path: "{{ certs_dir }}/san.cnf"
+        regexp: replaceme_longcname
+        replace: "{{ ansible_longcname }}"
+      when: ansible_cname != ""
+  
+    - name: Generate CSR based on san.cnf
+      shell: "openssl req -new -config {{ certs_dir }}/san.cnf -key {{ certs_dir }}/{{ ansible_hostname }}.key -out {{ certs_dir }}/{{ ansible_hostname }}.csr"
+    
+    - name: Here's your CSR
+      fetch:
+        dest: "{{ local_certs_dir }}/{{ ansible_hostname }}.csr"
+        src: "{{ certs_dir }}/{{ ansible_hostname }}.csr"
+        flat: yes

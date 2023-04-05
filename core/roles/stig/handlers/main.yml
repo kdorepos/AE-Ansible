@@ -1,0 +1,22 @@
+---
+- name: Restart chrony
+  become: true
+  service:
+    name: chronyd
+    state: restarted
+  listen: restart chrony
+
+- name: Restart sshd
+  become: true
+  service:
+    name: sshd
+    state: restarted
+  listen: restart sshd
+
+- name: Restart cron
+  become: true
+  service:
+    name: crond
+    state: restarted
+  listen: restart cron
+

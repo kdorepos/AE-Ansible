@@ -1,0 +1,20 @@
+- name: Disable service kdump
+  service:
+    name: kdump
+    enabled: "no"
+    state: "stopped"
+  register: service_result
+  failed_when: "service_result is failed and ('Could not find the requested service' not in service_result.msg)"
+  tags:
+    - STIG-RHEL-07-021300
+
+
+- name: Disable socket of service kdump if applicable
+  service:
+    name: kdump.socket
+    enabled: "no"
+    state: "stopped"
+  register: socket_result
+  failed_when: "socket_result is failed and ('Could not find the requested service' not in socket_result.msg)"
+  tags:
+    - STIG-RHEL-07-021300

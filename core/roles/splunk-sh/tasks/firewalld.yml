@@ -1,0 +1,41 @@
+---
+- name: Accept connections to splunk webpage
+  firewalld:
+    port: 8000/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections to splunk webpage - https
+  firewalld:
+    port: 443/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections for splunk indexer data replication
+  firewalld:
+    port: 8080/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections from splunk deployment server
+  firewalld:
+    port: 8089/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections from splunk deployment server
+  firewalld:
+    port: 8191/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+

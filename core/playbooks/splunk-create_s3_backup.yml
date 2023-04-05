@@ -1,0 +1,62 @@
+---
+- name: Creates /opt/splunk/etc backup, then uploads it to s3
+  hosts: ALL_CM, ALL_DS, ALL_HF, ALL_SH
+  become: true
+  gather_facts: true
+
+  vars_files:
+   - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Verify packages are installed
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - git
+        - python3
+        - net-tools
+
+    - name: Create backup
+      archive:
+        path: /opt/splunk/etc
+        dest: /opt/splunk/etc-backup.tar.gz
+        format: gz
+
+    - name: Grab Splunk name
+      shell: /opt/splunk/bin/splunk btool server list | grep -i servername | awk '{print $3}'
+      register: splunk_name
+      args:
+        warn: false
+
+    - name: Check Git HTTP config
+      shell: git config --list | grep http.sslverify
+      register: http.sslverify_status
+      args:
+        warn: false
+
+    - name: Configure Git to clone from HTTP w/ no SSL verification
+      shell: git config --global http.sslVerify "false"
+      when: http.sslverify_status != "http.sslverify=false"
+      args:
+        warn: false
+
+    - name: Clone the s3 repo
+      git:
+        repo: https://oauth2:{{ gitlab_pat_for_s3 }}@git.domain/project/automation/storagegrid.git
+        dest: /root/s3
+        clone: yes
+        force: yes
+
+    - name: Create aws credentials file
+      template:
+        src: /opt/ansible/group_files/aws_credentials.j2
+        dest: /root/.aws/credentials
+        owner: root
+        group: root
+
+    - name: Upload backup to S3 bucket
+      shell: /opt/splunk/bin/splunk cmd python3 upload.py
+      args:
+        chdir: /root/s3
+        warn: false

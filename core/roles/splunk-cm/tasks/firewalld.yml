@@ -1,0 +1,16 @@
+---
+- name: Accept connections to splunk webpage
+  firewalld:
+    port: 8000/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections from splunk deployment server
+  firewalld:
+    port: 8089/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled

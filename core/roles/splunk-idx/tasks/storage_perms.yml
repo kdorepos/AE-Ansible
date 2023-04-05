@@ -1,0 +1,14 @@
+---
+- name: Set permissions on hot
+  file:
+    dest: /hot
+    owner: splunk
+    group: splunk
+    recurse: yes 
+
+- name: Set permissions on cold
+  file:
+    dest: /cold
+    owner: splunk
+    group: splunk
+    recurse: yes

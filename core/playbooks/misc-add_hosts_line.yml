@@ -1,0 +1,15 @@
+---
+- name: Adds line to /etc/hosts to help IdM
+  hosts: localhost
+  become: true
+  gather_facts: true
+
+  vars:
+    domain: .domain
+
+  tasks:
+    - name: Modifying host file
+      lineinfile:
+        path: /etc/hosts
+        line: '{{ ansible_default_ipv4.address }} {{ ansible_hostname }}{{ domain }} {{ ansible_hostname }}'
+        create: yes

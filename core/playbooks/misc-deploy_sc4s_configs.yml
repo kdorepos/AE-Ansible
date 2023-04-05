@@ -1,0 +1,26 @@
+---
+- name: Deploy sc4s configs
+  hosts: ALL_HQ_SC4S
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Remove local changes
+      shell: git clean -df
+      args:
+        chdir: /opt/sc4s/local
+
+    - name: Download new version of sc4s
+      git:
+        repo: https://oauth2:{{ gitlab_pat_for_sc4s }}@git.domain/project/splunk/sc4s.git
+        dest: /opt/sc4s/local
+        update: yes
+        force: yes
+
+    - name: Restart sc4s
+      systemd:
+        name: sc4s
+        state: restarted

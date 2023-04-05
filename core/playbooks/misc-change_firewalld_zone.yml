@@ -1,0 +1,47 @@
+---
+- name: Changing firewalld zone to public
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    - zone_dir: /etc/firewalld/zones
+
+  tasks:
+    - name: Grab list of interfaces
+      shell: "ip a | awk -F ': ' '{print $2}' | grep -E 'enp*|ovirt*|eth[1-9]*|eth[1-9]{3}*'"
+      register: interface_list
+
+    - name: Copy drop.xml to public_tmp.xml
+      copy:
+        src: "{{ zone_dir }}/drop.xml"
+        dest: "{{ zone_dir }}/public_tmp.xml"
+        remote_src: true
+
+    - name: Remove drop from public_tmp.xml
+      shell: sed -i 's/\starget\=\"DROP\"//g' {{ zone_dir }}/public_tmp.xml
+
+    - name: Change zone name in public_tmp.xml
+      shell: sed -i 's/Drop/Public/g' {{ zone_dir }}/public_tmp.xml
+
+    - name: Change zone description in public_tmp.xml
+      shell: sed -i 's/Unsolicited incoming network packets are dropped. Incoming packets that are related to outgoing network connections are accepted. Outgoing network connectoins are allowed./For use in public areas. You do not trust the other computers on netowrks to not harm your computer. Only selected incoming connections are accepted./g' {{ zone_dir }}/public_tmp.xml
+
+    - name: Remove service names from drop.xml
+      shell: sed -i '/service name/d' {{ zone_dir }}/drop.xml
+
+    - name: Remove ports/protocols from drop.xml
+      shell: sed -i '/port protocol/d' {{ zone_dir }}/drop.xml
+
+    - name: Move tmp file to public.xml
+      shell: mv -f {{ zone_dir }}/public_tmp.xml {{ zone_dir }}/public.xml
+
+    - name: Change default zone to drop
+      shell: firewall-cmd --set-default-zone=drop
+
+    - name: Move interface to public zone
+      shell: firewall-cmd --permanent --zone=public --add-interface={{ item }}
+      with_items: "{{ interface_list.stdout_lines }}"
+
+    - name: Reload firewalld
+      shell: firewall-cmd --reload

@@ -1,0 +1,6 @@
+{
+    postrotate
+        /usr/bin/setfacl -m g:splunk:r /var/log/messages
+        /usr/bin/setfacl -m g:splunk:r /var/log/secure
+    endscript
+}

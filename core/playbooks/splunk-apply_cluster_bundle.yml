@@ -1,0 +1,12 @@
+---
+- name: Apply cluster bundle
+  hosts: ALL_CM
+  become: true
+  become_user: splunk
+  gather_facts: false
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Apply cluster bundle
+      shell: "~/bin/splunk apply cluster-bundle --answer-yes -auth 'admin:{{ splunk_user_pwd }}'"

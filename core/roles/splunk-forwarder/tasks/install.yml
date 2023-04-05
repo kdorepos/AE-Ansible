@@ -1,0 +1,39 @@
+---
+- name: Enable Splunk repo
+  shell: subscription-manager repos --enable={{ splunk_repo }}
+
+- name: Install splunk {{ splunkforwarder_version }}
+  command: "yum install splunkforwarder-{{ splunkforwarder_version|join('.') }} -y"
+  become: true
+
+- name: Disable Splunk repo
+  shell: subscription-manager repos --disable={{ splunk_repo }}
+
+- name: Create deployment client app
+  file:
+    path: /opt/splunkforwarder/etc/apps/zzz_app_ENT_deploymentclient_conf/default
+    owner: splunk
+    group: splunk
+    mode: '0755'
+    recurse: yes
+    state: directory
+
+- name: Create deploymentclient.conf
+  file:
+    path: /opt/splunkforwarder/etc/apps/zzz_app_ENT_deploymentclient_conf/default/deploymentclient.conf
+    owner: splunk
+    group: splunk
+    mode: '0755'
+    state: touch
+
+- name: Configure deploymentclient.conf
+  shell: |
+    cat > /opt/splunkforwarder/etc/apps/zzz_app_ENT_deploymentclient_conf/default/deploymentclient.conf <<EOF
+    [deployment-client]
+
+    [target-broker:deploymentServer]
+    targetUri = {{ splunk_deploymentServer }}:{{ splunk_deploymentServer_port }}
+    EOF
+
+- name: Set read permissions on /var/log
+  shell: "setfacl -Rdm g:splunk:rx /var/log/"

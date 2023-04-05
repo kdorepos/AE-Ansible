@@ -1,0 +1,30 @@
+---
+- name: Change DNS information with NetworkManager
+  hosts: all,!ALL_RHVM,!ALL_RHVH
+  gather_facts: false
+  become: true
+
+  vars:
+    dns_search_domain: domain
+    dns_ips: "10.1.230.1 10.1.230.2"
+
+  tasks:
+    - name: Get list of active connections
+      shell: nmcli -t -f NAME c show --active
+      register: active_conn_result
+      changed_when: "'NONSENSE' in active_conn_result.stdout"
+
+    - name: Identify primary connection
+      set_fact:
+        active_conn: "{{ active_conn_result.stdout_lines[+0] }}"
+
+    - name: Set DNS IPs
+      shell: nmcli con mod "{{ active_conn }}" ipv4.dns-search "{{ dns_search_domain }}"
+
+    - name: Set DNS search domain
+      shell: nmcli con mod "{{ active_conn }}" ipv4.dns "{{ dns_ips }}"
+
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted

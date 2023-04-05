@@ -1,0 +1,32 @@
+---
+- hosts: all,!ALL_HQ_RHVH,!ALL_500A_RHVH,!ALL_600A_RHVH
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Copy McAfee install script
+      get_url:
+        url: http://10.1.228.28/pub/.ansible/mcafee_install.sh
+        dest: /tmp/mcafee_install.sh
+        mode: '0700'
+        timeout: 90
+
+    - name: Install unzip
+      yum:
+        name: unzip
+        state: present
+
+    - name: Run McAfee install script
+      shell: /tmp/mcafee_install.sh -i -r
+
+    - name: Check for McAfee running as root
+      shell: ps -eaf | grep macmnsvc | head -n 1 | grep -o '^\S*'
+      register: mcafee_user
+      tags:
+      - check
+
+    - name: App list
+      debug:
+        msg: "Mcafee is running as: {{ mcafee_user.stdout }}"
+      tags:
+      - check

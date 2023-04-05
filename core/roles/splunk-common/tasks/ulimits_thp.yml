@@ -1,0 +1,39 @@
+- name: Append ulimits configurations to limits.conf 
+  blockinfile:
+    path: /etc/security/limits.conf
+    block: |
+      splunk  hard  core  0
+      splunk  hard  maxlogins 10
+      splunk  soft  nofile  65535
+      splunk  hard  nofile  65535
+      splunk  soft  nproc   20480
+      splunk  hard  nproc   20480
+      splunk  soft  fsize   unlimited
+      splunk  hard  fsize   unlimited
+    backup: yes
+
+- name: Append thp configuration to rc.local
+  blockinfile:
+    path: /etc/rc.d/rc.local
+    block: |
+      \#SPLUNK - disable THP at boot time
+      THP=`find /sys/kernel/mm/ -name transparent_hugepage -type d | tail -n 1`
+      for SETTING in "enabled" "defrag";do
+          if test -f ${THP}/${SETTING}; then
+              echo never > ${THP}/${SETTING}
+          fi
+      done
+    backup: yes
+
+- name: Make rc.local executable
+  file:
+    path: /etc/rc.d/rc.local
+    mode: a+x
+
+- name: Copy init.d file
+  copy:
+    src: /opt/ansible/group_files/splunk.init
+    dest: /etc/init.d/splunk
+    owner: root
+    group: root
+    mode: 0700

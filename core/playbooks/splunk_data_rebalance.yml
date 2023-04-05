@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: true
+  become_method: sudo
+  become_user: splunk
+  gather_facts: false
+
+  vars:
+    rebalance_time: 540
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Kick off data rebalance
+      command: "/opt/splunk/bin/splunk rebalance cluster-data -auth admin:'{{ splunk_user_pwd }}' -action start -searchable true -max_runtime_interval_in_minutes {{ rebalance_time }}"
+      no_log: true

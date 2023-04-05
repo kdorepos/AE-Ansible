@@ -1,0 +1,8 @@
+---
+- name: Create directory to make this machine a deployment server
+  file:
+    path: /opt/splunk/etc/deployment-apps/blank_app
+    state: directory
+    owner: splunk
+    group: splunk
+

@@ -1,0 +1,19 @@
+---
+- name: Set perms on local logs
+  shell: setfacl -R -m u:splunk:r-x /var/log
+
+- name: Make perm changes persistent
+  shell: |
+    cat > /etc/logrotate.d/Splunk_ACLs << EOF
+    {
+    postrotate
+       /usr/bin/setfacl -m g:splunk:r /var/log/messages
+      /usr/bin/setfacl -m g:splunk:r /var/log/secure
+    endscript
+    }
+    EOF
+
+- name: Start splunk
+  service:
+    name: splunk
+    state: started

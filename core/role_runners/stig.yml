@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: true
+
+  vars_prompt:
+    - name: Run_common
+      prompt: "Wanna run common?"
+      default: "Y"
+      private: no
+
+  roles:
+  - { role: common, when: run_common == "Y" }
+  - stig

@@ -1,0 +1,25 @@
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+req_extensions = req_ext
+distinguished_name = dn
+
+[ dn ]
+C=US
+ST=Maryland
+L=Unknown
+O=Org
+OU=domain
+emailAddress=team@domain
+CN = replaceme_fqdn
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = replaceme_fqdn
+DNS.2 = replaceme_short
+DNS.3 = replaceme_cname
+DNS.4 = replaceme_longcname
+IP.1 = replaceme_ip

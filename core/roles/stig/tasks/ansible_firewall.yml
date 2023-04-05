@@ -1,0 +1,11 @@
+## RHEL-07-040810
+- name: Change firewalld.conf Default Zone to meet STIG requirements
+  lineinfile:
+    path: /etc/firewalld/firewalld.conf
+    regexp: '^DefaultZone='
+    line: DefaultZone=drop
+
+## RHEL-07-040100
+- name: Firewall script
+  script: 
+    cmd: files/scripts/firewall.sh

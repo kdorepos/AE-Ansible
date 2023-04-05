@@ -1,0 +1,91 @@
+## Copy Auditd Rules files to appropriate locations to meet STIG requirements for auditing
+- name: Audit.rules
+  copy:
+    src: files/audit/audit.rules
+    dest: /etc/audit/audit.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Audit.rules
+  copy:
+    src: files/audit/audit.rules
+    dest: /etc/audit/rules.d/audit.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: .rules
+  copy:
+    src: files/audit/rules.d/.rules
+    dest: /etc/audit/rules.d/.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Privileged.rules
+  copy:
+    src: files/audit/rules.d/privileged.rules
+    dest: /etc/audit/rules.d/privileged.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Modules.rules
+  copy:
+    src: files/audit/rules.d/modules.rules
+    dest: /etc/audit/rules.d/modules.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Logins.rules
+  copy:
+    src: files/audit/rules.d/logins.rules
+    dest: /etc/audit/rules.d/logins.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Actions.rules
+  copy:
+    src: files/audit/rules.d/actions.rules
+    dest: /etc/audit/rules.d/actions.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Export.rules
+  copy:
+    src: files/audit/rules.d/export.rules
+    dest: /etc/audit/rules.d/export.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Immutable.rules
+  copy:
+    src: files/audit/rules.d/immutable.rules
+    dest: /etc/audit/rules.d/immutable.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Audit_rules_usergroup_modification.rules
+  copy:
+    src: files/audit/rules.d/audit_rules_usergroup_modification.rules
+    dest: /etc/audit/rules.d/audit_rules_usergroup_modification.rules
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+- name: Audit.conf
+  copy:
+    src: files/audit/auditd.conf
+    dest: /etc/audit/auditd.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes    
+- name: Restart auditd
+  command: service auditd restart

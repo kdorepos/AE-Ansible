@@ -1,0 +1,48 @@
+- stat: path=/sys/firmware/efi/efivars/
+  register: grub_efi
+  tags: grub-password
+
+- name: Remove unwanted grub.cfg on EFI systems
+  file:
+    state: absent
+    path: /boot/grub2/grub.cfg
+  when: grub_efi.stat.exists == True
+  tags: grub-password
+
+- name: Install user template to make sure grub2-mkconfig doesn't mess up the config
+  shell: "sed -i s/root/{{ grub_user }}/g /etc/grub.d/01_users"
+
+- name: Yum install expect
+  yum:
+    name: expect
+    state: present
+
+- name: Configure Grub Password
+  script: 
+    cmd: scripts/grub2-password.sh "{{ grub_pwd }}"
+
+- name: Rebuild grub.cfg with mkconfig
+  shell: grub2-mkconfig -o /boot/grub2/grub.cfg
+  
+- name: Yum install dracut-fips
+  yum:
+    name: dracut-fips
+    state: present
+
+- name: Rebuild initramfs
+  shell: dracut -f
+
+- name: Edit kernel command line to include fips=1
+  shell:
+    cmd: grubby --update-kernel=$(grubby --default-kernel) --args=fips=1
+
+- name: Edit kernel command-line to include the boot=UUID=XXXX
+  shell: |
+    uuid=$(findmnt -no uuid /boot)
+    [[ -n $uuid ]] && grubby --update-kernel=$(grubby --default-kernel) --args=boot=UUID=${uuid}
+
+- name: Configure GRUB2 Kernel for use with grub2-mkconfig
+  shell: |
+    sed -i '/^GRUB_CMDLINE_LINUX=/s/"$/ fips=1"/' /etc/default/grub
+    uuid=$(findmnt -no uuid /boot)
+    [[ -n $uuid ]] && sed -i "/^GRUB_CMDLINE_LINUX=/s/\"$/ boot=UUID=${uuid}\"/" /etc/default/grub

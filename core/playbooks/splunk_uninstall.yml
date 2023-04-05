@@ -1,0 +1,37 @@
+---
+- name: Splunk Uninstall
+  hosts: '{{ host }}'
+  become: true
+  gather_facts: false
+  vars:
+    splunk_home: "/opt/splunk"
+  
+  tasks:
+  - name: Get all splunk processes
+    shell: ps -ef | grep splunk | grep -v grep | awk '{print $2;}'
+    register: running_processes
+
+  - name: Kill all splunk processes
+    shell: "kill -9 {{ item }}"
+    with_items: "{{running_processes.stdout_lines }}"
+  
+  - name: Remove splunk folder structure
+    file:
+      state: absent
+      path: "{{ splunk_home }}/"
+
+  - name: Remove splunkforwarder folder structure
+    file:
+      state: absent
+      path: "{{ splunk_home }}/"
+
+  - name: Remove splunk user
+    user:
+      name: splunk
+      state: absent
+      remove: yes
+
+  - name : remove splunk group
+    group:
+       name: splunk
+       state: absent

@@ -1,0 +1,22 @@
+# splunk_cgroup.conf - goes in /etc/cgconfig.d/
+group group1 {
+       perm {
+              task {
+                     uid = splunk;
+                     gid = splunk;
+              }
+              admin {
+                     uid = splunk;
+                     gid = splunk;
+              }
+       }
+       cpu { }
+       memory {
+              # use this for Site 1 indexers
+              # memory.limit_in_bytes = 112742891520;
+              # use this for Site 2/3 indexers
+              # memory.limit_in_bytes = 53687091200;
+              # use this for FWD VM indexers
+              memory.limit_in_bytes = 23085449216;
+       }
+}

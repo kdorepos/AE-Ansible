@@ -1,0 +1,16 @@
+---
+- name: Add name here
+  hosts: all
+  become: true
+  gather_facts: false
+  vars_files:
+    - /opt/ansible/group_vars/vars_file.yml
+
+  vars_prompt:
+    - name: Example_var
+      prompt: "this is an example prompt"
+      private: no
+
+  tasks:
+    - name: Template | first task
+      command: "cat /proc/cpuinfo"

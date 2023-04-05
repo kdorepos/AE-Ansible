@@ -1,0 +1,84 @@
+---
+- name: Shutdown a site
+  hosts: localhost
+  become: true
+  gather_facts: false
+
+  tasks:
+    - pause:
+        prompt: You are about to shutdown Site {{ site }}. Please know what you are doing. Press return to continue. Press Ctrl+c and then "a" to abort.
+
+    - name: Stop the search heads
+      shell: "/opt/splunk/bin/splunk stop"
+      become_user: splunk
+      delegate_to: ALL_{{ site }}_SH
+      ignore_errors: true
+
+    - name: Shutdown search heads
+      shutdown:
+      delegate_to: ALL_{{ site }}_SH
+      ignore_errors: true
+
+    - name: Shutdown syslog
+      shutdown:
+      delegate_to: ALL_{{ site }}_SYSLOG
+      ignore_errors: true
+
+    - name: Stop the heavy forwarders
+      shell: "/opt/splunk/bin/splunk stop"
+      become_user: splunk
+      delegate_to: ALL_{{ site }}_HF
+      ignore_errors: true
+
+    - name: Shutdown heavy forwarders
+      shutdown:
+      delegate_to: ALL_{{ site }}_HF
+      ignore_errors: true
+
+    - name: Stop the indexers
+      shell: "/opt/splunk/bin/splunk stop"
+      become_user: splunk
+      delegate_to: ALL_{{ site }}_IDX
+      ignore_errors: true
+
+    - name: Shutdown indexers
+      shutdown:
+      delegate_to: ALL_{{ site }}_IDX
+      ignore_errors: true
+
+    - name: Stop the cluster master
+      shell: "/opt/splunk/bin/splunk stop"
+      become_user: splunk
+      delegate_to: ALL_{{ site }}_CM
+      ignore_errors: true
+
+    - name: Shutdown cluster master
+      shutdown:
+      delegate_to: ALL_{{ site }}_CM
+      ignore_errors: true
+
+    - name: Stop the deployment server
+      shell: "/opt/splunk/bin/splunk stop"
+      become_user: splunk
+      delegate_to: ALL_HQ_DS
+      ignore_errors: true
+      when: site == HQ
+
+    - name: Shutdown deployment server
+      shutdown:
+      delegate_to: ALL_HQ_DS
+      ignore_errors: true
+      when: site == HQ
+
+    - name: Stop the license master
+      shell: "/opt/splunk/bin/splunk stop"
+      become_user: splunk
+      delegate_to: ALL_HQ_LM
+      ignore_errors: true
+      when: site == HQ
+
+    - name: Shutdown license master
+      shutdown:
+      delegate_to: ALL_HQ_LM
+      ignore_errors: true
+      when: site == HQ

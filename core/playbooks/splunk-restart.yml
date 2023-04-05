@@ -1,0 +1,10 @@
+---
+- name: "restarts splunk"
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: "restarts splunk"
+      shell: "~/bin/splunk restart"
+      become_user: splunk

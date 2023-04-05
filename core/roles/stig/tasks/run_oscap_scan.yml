@@ -1,0 +1,30 @@
+- name: Install oscap scanner
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+  - openscap-scanner
+  - scap-security-guide
+
+- block:
+  - name: Run openscap
+    shell: >
+      sudo oscap xccdf eval --profile {{ oscap_profile }}
+      --results /tmp/{{ ansible_hostname }}-scap-results-$(date +%Y-%m-%d).xml
+      --report /tmp/{{ ansible_hostname }}-scap-results-$(date +%Y-%m-%d)-after.html
+      --oval-results --cpe /usr/share/xml/scap/ssg/content/ssg-rhel7-cpe-dictionary.xml
+      /usr/share/xml/scap/ssg/content/{{ oscap_policy }}.xml
+    ignore_errors: true
+    no_log: true
+
+- name: Download report
+  fetch:
+    src: /tmp/{{ ansible_hostname }}-scap-results-{{ ansible_date_time.date }}-after.html
+    dest: ./reports/{{ ansible_hostname }}-scap-results-{{ ansible_date_time.date }}-after.html
+    flat: yes
+
+- name: Update perms on report on host for splunk ingestion
+  file:
+    path: /tmp/{{ ansible_hostname }}-scap-results-{{ ansible_date_time.date }}.xml
+    owner: splunk
+    group: splunk

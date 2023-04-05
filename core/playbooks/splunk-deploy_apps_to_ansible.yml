@@ -1,0 +1,25 @@
+---
+- name: Deploy splunk apps from gitlab
+  hosts: TOWER
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Remove local changes
+      shell: git clean -df
+      args:
+        chdir: /srv/splunk_apps
+
+    - name: Clone splunk apps repoository
+      git:
+        repo: https://oauth2:{{ gitlab_pat_for_ansible_splunk_apps }}@git.domain/project/splunk/apps.git
+        dest: /srv/splunk_apps
+      become: false
+
+    - name: Set permissions on splunk_apps directory
+      shell: chown -R ansible.svc:redhat-admins /srv/splunk_apps
+      args:
+        warn: false

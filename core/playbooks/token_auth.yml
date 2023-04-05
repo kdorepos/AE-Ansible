@@ -1,0 +1,71 @@
+---
+- name: "Implementing token authentication on Splunk frontends"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+  - name: "Install httpd-2.4.6-80.el7.x86_64"
+    yum:
+      name: httpd-2.4.6-80.el7.x86_64
+      state: present
+
+  - name: "Install mod_ssl"
+    yum:
+      name: mod_ssl
+      state: present
+
+  - name: "Start & enable httpd"
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+
+  - name: Open 443/tcp on firewall
+    firewalld:
+      service: https
+      permanent: yes
+      state: enabled
+
+  - name: Reload firewalld
+    shell: "firewall-cmd --reload"
+
+  - name: Archiving old ssl.conf file
+    shell: "mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bak"
+
+  - name: Copy down ssl.conf
+    copy:
+      src: /opt/ansible/group_files/ssl.conf
+      dest: /etc/httpd/conf.d/ssl.conf
+
+  - name: Copy down dod_root_chain.pem
+    copy:
+      src: /opt/ansible/group_files/dod_root_chain.pem
+      dest: /etc/pki/tls/certs/dod_root_chain.pem
+
+  - name: Replacing hostname with {{ ansible_fqdn }}
+    replace:
+      path: /etc/httpd/conf.d/ssl.conf
+      regexp: 'fqdn_of_splunk_server'
+      replace: '{{ ansible_fqdn }}'
+
+  - name: Restorecon on /etc/httpd/ directory
+    shell: "restorecon -R /etc/httpd"
+
+  - name: Set SELinux configuration for httpd
+    shell: "setsebool -P httpd_can_network_connect on"
+
+  - name: Remove local authentication.conf
+    file:
+      path: /opt/splunk/etc/system/local/authentication.conf
+      state: absent
+
+  - name: Remove local authorize.conf
+    file:
+      path: /opt/splunk/etc/system/local/authorize.conf
+      state: absent
+
+  - name: Restart httpd
+    service:
+      name: httpd
+      state: restarted

@@ -1,0 +1,48 @@
+---
+- name: Modify cgroups for Splunk indexers
+  hosts: ALL_IDX
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install libcgroup-tools
+      yum:
+        name: libcgroup-tools
+        state: present
+
+    - name: Enable cgconfig 
+      systemd:
+        name: cgconfig
+        enabled: yes
+
+    - name: Start cgconfig
+      systemd:
+        name: cgconfig
+        state: started
+
+    # commented out to replace with alternative config
+    #- name: Create cgconfig settings
+    #  shell: "cgcreate -t splunk:splunk -a splunk:splunk -g memory,cpu:group1"
+
+    #- name: Set cgconfig settings
+    #  shell: "cgset -r memory.limit_in_bytes=$((105*1024*1024*1024)) group1"
+
+    - name: Copy cgconfig file
+      copy:
+        src: /opt/ansible/group_files/splunk_cgroup.cgconfig
+        dest: /etc/cgconfig.d/splunk_cgroup.conf
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Copy init.d file
+      copy:
+        src: /opt/ansible/group_files/splunk_indexer.init
+        dest: /etc/init.d/splunk
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: Reload systemctl daemon
+      systemd:
+        daemon_reload: yes

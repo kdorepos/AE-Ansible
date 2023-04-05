@@ -1,0 +1,14 @@
+---
+- name: Include global splunk variables
+  include_vars: /opt/ansible/group_vars/splunk.yml
+
+- name: Include vault
+  include_vars: /opt/ansible/content/secrets/main.yml
+
+- name: Deploy splunk-common role
+  include_tasks: "{{ item }}"
+  loop:
+    - install.yml
+    - autostart.yml
+    - pass4SymmKey.yml
+    - ulimits_thp.yml

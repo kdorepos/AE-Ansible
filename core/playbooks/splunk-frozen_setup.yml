@@ -1,0 +1,67 @@
+---
+- name: Set up frozen environment
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - /opt/ansible/group_vars/general.yml
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Prep | install required packages
+      yum:
+        name: ['git', 'python3-pip']
+        state: present
+
+    - name: Prep | disable ssl verify for git
+      shell: git config --global http.sslVerify "false"
+
+    - name: Prep | clone down repo
+      git:
+        repo: https://git.domain/chaosapes/storagegrid-scripts.git
+        dest: /tmp/storagegrid-scripts
+        clone: yes
+        update: yes
+
+    - name: Prep | unzip contents
+      shell: unzip -o boto3.zip
+      args:
+        chdir: /tmp/storagegrid-scripts/boto3
+
+    - name: Install | build boto3
+      shell: python3 setup.py install
+      ignore_errors: true
+      args:
+        chdir: /tmp/storagegrid-scripts/boto3/boto3
+
+    - name: Install | build boto3 dependencies
+      shell: pip3 install boto3 --no-index --find-links /tmp/storagegrid-scripts/boto3/boto3
+      args:
+        chdir: /tmp/storagegrid-scripts/boto3/boto3
+
+    - name: Test | create .aws directory
+      file: 
+        path: /opt/splunk/.aws
+        state: directory
+        owner: splunk
+        group: splunk
+      become_user: splunk
+    
+    - name: Test | create credentials file
+      template:
+        src: /opt/ansible/group_files/credentials.j2
+        dest: /opt/splunk/.aws/credentials
+        owner: splunk
+        group: splunk
+        mode: 0644
+      become_user: splunk
+
+    - name: Test | try to connect to the bucket
+      shell: ~/bin/splunk cmd python /tmp/storagegrid-scripts/test_creds.py
+      become_user: splunk
+
+    - name: Clean | remove storage grid directory
+      file: 
+        path: /tmp/storagegrid-scripts
+        state: absent

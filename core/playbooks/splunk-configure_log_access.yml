@@ -1,0 +1,26 @@
+---
+- name: Configuring splunk to read /var/log/ messages
+  hosts: ALL_SPLUNK
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Change log group in auditd.conf
+      lineinfile:
+        path: /etc/audit/auditd.conf
+        regexp: '^log_group'
+        line: log_group = splunk
+
+    - name: Restart auditd daemon
+      command: /sbin/service auditd restart
+
+    - name: Setfacl for /var/log/messages
+      command: "setfacl -m g:splunk:r /var/log/messages"
+
+    - name: Setfacl for /var/log/secure
+      command: "setfacl -m g:splunk:r /var/log/secure"
+
+    - name: Add logrotate config file for splunk
+      copy:
+        src: /opt/ansible/group_files/Splunk_ACLs
+        dest: /etc/logrotate.d/Splunk_ACLs

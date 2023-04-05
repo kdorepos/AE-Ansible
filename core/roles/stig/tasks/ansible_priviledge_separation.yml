@@ -1,0 +1,13 @@
+## RHEL-07-040460
+- name: "Enable use of Privilege Separation"
+  lineinfile:
+    create: yes
+    dest: /etc/ssh/sshd_config
+    regexp: (?i)^#?useprivilegeseparation
+    line: UsePrivilegeSeparation sandbox
+    validate: /usr/sbin/sshd -t -f %s
+  #notify: restart sshd
+  tags:
+  - RHEL-07-040460
+  when:  # Bare-metal/VM task, not applicable for containers
+    - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")

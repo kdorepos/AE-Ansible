@@ -1,0 +1,12 @@
+---
+- name: Check splunk auto-start at boot
+  stat:
+    path: /opt/splunk/ftr
+  register: auto
+
+- name: Enable splunk auto-start at boot
+  become: true
+  shell: "/opt/splunk/bin/splunk enable boot-start -systemd-managed 0 -user {{ splunk_user }} --accept-license --answer-yes --seed-passwd '{{ splunk_user_pwd }}'"
+  when:
+  - auto.stat.exists == true
+  no_log: true

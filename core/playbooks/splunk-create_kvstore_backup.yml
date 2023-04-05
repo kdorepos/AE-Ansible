@@ -1,0 +1,88 @@
+---
+- name: Creates es kvstore backup, then uploads it to s3
+  hosts: n000cesp013-ne.domain
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  vars:
+    app_names: [SA-ThreatIntelligence, SA-IdentityManagement, SA-IdentityManagement, SA-IdentityManagement]
+    collection_names: [incident_review, identities_expanded, assets_by_str, assets_by_cidr]
+    kvstore_backup_dir: /opt/splunk/var/lib/splunk/kvstorebackup
+
+  tasks:
+    - name: Check kvstore status
+      shell: "~/bin/splunk show kvstore-status -auth 'admin:{{ splunk_user_pwd }}' | grep backupRestoreStatus | awk '{print $3}'"
+      register: kvstore_status
+      failed_when: kvstore_status.stdout != 'Ready'
+      changed_when: "'NONSENSE' in kvstore_status.stdout"
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Grab splunk name
+      shell: ~/bin/splunk btool server list | grep -i servername | awk '{print $3}'
+      register: splunk_name
+      changed_when: "'NONSENSE' in splunk_name.stdout"
+      become_user: splunk
+
+    - set_fact:
+        kvstores: "{{ app_names | zip(collection_names) | list }}"
+
+    - name: Create backup
+      shell: "~/bin/splunk backup kvstore -archiveName '{{ splunk_name.stdout }}--{{ item.0 }}--{{ item.1 }}' -collectionName '{{ item.1 }}' -appName '{{ item.0 }}'"
+      loop: "{{ kvstores }}"
+      loop_control:
+        pause: 20
+      become_user: splunk
+      args:
+        warn: false
+
+    - name: Clone the s3 repo
+      git:
+        repo: https://oauth2:{{ gitlab_pat_for_s3 }}@git.domain/project/automation/storagegrid.git
+        dest: /root/s3
+        clone: yes
+        force: yes
+
+    - name: Remove existing aws credentials file, if it exists
+      file:
+        path: /root/.aws/credentials
+        state: absent
+
+    - name: Create aws credentials file
+      template:
+        src: /opt/ansible/group_files/aws_credentials.j2
+        dest: /root/.aws/credentials
+        owner: root
+        group: root
+
+    - name: Upload backup to s3 bucket
+      shell: /opt/splunk/bin/splunk cmd python3 upload.py {{ kvstore_backup_dir }}/{{ splunk_name.stdout }}--{{ item.0 }}--{{ item.1 }}.tar.gz splunk-backups kvstores/{{ splunk_name.stdout }}--{{ item.0 }}--{{ item.1 }}.tar.gz
+      loop: "{{ kvstores }}"
+      args:
+        chdir: /root/s3
+        warn: false
+
+    - name: Find all kvstore backup files
+      find:
+        paths: "{{ kvstore_backup_dir }}"
+        patterns: '*.tar.gz*'
+      register: backups_to_delete
+
+    - name: Clean up old kvstore backup files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items:
+        - "{{ backups_to_delete.files }}"
+
+    - name: Clean up other stuff
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /root/s3
+        - /root/.aws/credentials

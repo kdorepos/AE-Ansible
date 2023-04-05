@@ -1,0 +1,32 @@
+---
+- name: Deploy deployment server apps from gitlab
+  hosts: ALL_HQ_DS
+  gather_facts: true
+  become: true
+  become_user: splunk
+
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Remove local changes
+      shell: git clean -df
+      args:
+        chdir: /opt/splunk/etc/deployment-apps
+
+    - name: Download new version of deployment server apps
+      git:
+        repo: https://oauth2:{{ gitlab_pat_for_deployment_server }}@git.domain/project/splunk/deployment-server-apps.git
+        dest: /opt/splunk/etc/deployment-apps
+        update: yes
+        force: yes
+
+    - name: Make shell and python scripts executable
+      shell: find . -name *.sh -o -name *.py -exec choose +x {} \;
+      args:
+        warn: false
+        chdir: /opt/splunk/etc/deployment-apps
+  
+    - name: Run a debug refresh
+      shell: "/opt/splunk/bin/splunk search '| refresh' -auth admin:{{ splunk_user_pwd }}"
+      when: confirm_debug == "yes"

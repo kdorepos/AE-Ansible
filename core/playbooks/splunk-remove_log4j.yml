@@ -1,0 +1,83 @@
+--- 
+- name: "remove log4j libraries"
+  hosts: ALL_SPLUNK_ENTERPRISE
+  become: true
+  become_user: root
+  become_method: sudo
+  gather_facts: true
+
+  vars:
+    SPLUNK_HOME: /opt/splunk
+
+  tasks: 
+    - name: Register splunk version
+      shell: "{{ SPLUNK_HOME }}/bin/splunk version | awk '{print $2}'"
+      register: SPLUNK_VERSION
+      args:
+        warn: false
+
+    - name: "register manifest file"
+      shell: "ls {{ SPLUNK_HOME }} | grep manifest | grep {{ SPLUNK_VERSION.stdout }}"
+      register: SPLUNK_MANIFEST
+      args:
+        warn: false
+
+    - name: Remove spark directory
+      shell: rm -rf {{ SPLUNK_HOME }}/bin/jars/vendors/spark/*
+      args:
+        warn: false
+
+    - name: Remove splunk-library-javalogging jars
+      shell: rm -rf {{ SPLUNK_HOME }}/bin/jars/vendors/libs/splunk-library-javalogging-*.jar
+      args:
+        warn: false
+
+    - name: Remove thirdparty hive directory
+      shell: rm -rf {{ SPLUNK_HOME }}/bin/jars/thirdparty/hive*
+      args:
+        warn: false
+
+    - name: Remove splunk_archiver jars
+      shell: rm -rf {{ SPLUNK_HOME }}/etc/apps/splunk_archiver/java-bin/jars/*
+      args:
+        warn: false
+        
+    - name: Find log4j libraries in var/run/searchpeers
+      shell: "find /opt/splunk -name 'log4j*' | grep -i 'var/run'"
+      register: LOG4J_ITEMS
+      ignore_errors: true
+      
+    - name: Remove those libraries
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items: "{{ LOG4J_ITEMS.stdout_lines }}"
+
+    - name: Remove spark directory from manifest
+      lineinfile:
+        path: "{{ SPLUNK_HOME }}/{{ SPLUNK_MANIFEST.stdout }}"
+        regexp: 'bin\/jars\/vendors\/spark'
+        state: absent
+
+    - name: Remove splunk-library-javalogging jars from manifest
+      lineinfile:
+        path: "{{ SPLUNK_HOME }}/{{ SPLUNK_MANIFEST.stdout }}"
+        regexp: 'bin\/jars\/vendors\/libs\/splunk-library-javalogging'
+        state: absent
+
+    - name: Remove thirdparty hive directory from manifest
+      lineinfile:
+        path: "{{ SPLUNK_HOME }}/{{ SPLUNK_MANIFEST.stdout }}"
+        regexp: 'bin\/jars\/thirdparty\/hive'
+        state: absent
+
+    - name: Remove splunk_archiver jars from manifest
+      lineinfile:
+        path: "{{ SPLUNK_HOME }}/{{ SPLUNK_MANIFEST.stdout }}"
+        regexp: 'etc\/apps\/splunk_archiver\/java-bin\/jars'
+        state: absent
+
+    - name: Restart splunk
+      shell: "~/bin/splunk restart"
+      become_user: splunk
+      when: splunk_restart is defined

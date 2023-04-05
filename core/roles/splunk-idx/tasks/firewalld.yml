@@ -1,0 +1,40 @@
+---
+- name: Accept connections for splunk indexer data replication
+  firewalld:
+    port: 8080/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections for http event collector
+  firewalld:
+    port: 8088/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections from splunk deployment server
+  firewalld:
+    port: 8089/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections for input of outputs.conf
+  firewalld:
+    port: 9997/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled
+
+- name: Accept connections for ssl input of outputs.conf
+  firewalld:
+    port: 9998/tcp
+    permanent: true
+    immediate: yes
+    zone: public
+    state: enabled

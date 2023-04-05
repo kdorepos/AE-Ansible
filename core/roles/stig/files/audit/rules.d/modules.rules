@@ -1,0 +1,14 @@
+## RHEL-07-030820
+-a always,exit -F arch=b64 -S init_module -k modules
+
+## RHEL-07-030830
+-a always,exit -F arch=b64 -S delete_module -k modules
+
+## RHEL-07-030840
+-w /usr/sbin/insmod -p x -k modules
+
+## RHEL-07-030850
+-w /usr/sbin/rmmod -p x -k modules
+
+## RHEL-07-030860
+-w /usr/sbin/modprobe -p x -k modules

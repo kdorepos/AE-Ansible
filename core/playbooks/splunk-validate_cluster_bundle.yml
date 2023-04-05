@@ -1,0 +1,24 @@
+---
+- name: Validate cluster bundle
+  hosts: ALL_CM
+  become: true
+  become_user: splunk
+  gather_facts: false
+  vars_files:
+    - /opt/ansible/content/secrets/main.yml
+
+  tasks:
+    - name: Kick off bundle validation
+      shell: "~/bin/splunk validate cluster-bundle --check-restart -auth 'admin:{{ splunk_user_pwd }}'"
+
+    - name: Check bundle validation
+      shell: "~/bin/splunk show cluster-bundle-status | grep last_validation_succeeded"
+      register: validation_result
+      failed_when: "'0' in validation_result.stdout"
+      changed_when: "'NONSENSE' in validation_result.stdout"
+
+    - name: Check if restart is needed
+      shell: "~/bin/splunk show cluster-bundle-status | grep last_check_restart_result"
+      register: restart_result
+      failed_when: "'restart required' in restart_result.stdout"
+      changed_when: "'NONSENSE' in restart_result.stdout"

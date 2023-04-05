@@ -1,0 +1,6 @@
+- name: Ensure screen is installed
+  package:
+    name: screen
+    state: present
+  tags:
+    - RHEL-07-010090

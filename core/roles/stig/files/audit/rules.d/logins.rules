@@ -1,0 +1,8 @@
+## RHEL-07-030600
+-w /var/log/tallylog -p wa -k logins
+
+## RHEL-07-030610
+-w /var/run/faillock -p wa -k logins
+
+## RHEL-07-030620
+-w /var/log/lastlog -p wa -k logins

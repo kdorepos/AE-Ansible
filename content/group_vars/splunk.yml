@@ -1,0 +1,10 @@
+---
+splunk_user: splunk
+splunk_group: splunk
+splunk_deploymentServer: n000ceds001-ne.domain
+splunk_deploymentServer_port: 8089
+splunk_version: [8,1,1]
+splunkforwarder_version: [8,1,1]
+splunk_file_location: /opt/ansible/group_files/
+splunk_satellite_location: https://n001uvsat01.domain/pub/splunk/
+splunk_repo: Splunk_Splunk_Splunk

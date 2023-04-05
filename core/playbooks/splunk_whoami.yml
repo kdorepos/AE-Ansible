@@ -1,0 +1,14 @@
+---
+- hosts: all
+  gather_facts: False
+  tasks:
+    - name: Run whoami as splunk
+      command: whoami
+      become: true
+      become_user: splunk
+      changed_when: False
+      register: result
+
+    - debug: msg="{{ result.stdout }}"
+#    - debug: var=result.stdout_lines"
+#    - debug: var=result
